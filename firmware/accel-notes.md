@@ -39,3 +39,9 @@ EasyDMA driver (`nrfx_twim`). Then it builds.
 ## Test build
 `#define TEST_ACCEL` in example_selection.h + `accel_test();` in main.c dispatch.
 Prebuilt image: `firmware/hex/accel_test.hex`. Streams `ACC: x y z` over RTT.
+
+## Hardware verified (2026-07-13)
+Flashed accel_test.hex to board #1. `ACCEL: init OK`. At rest Z~=264 counts
+(~1 g, sensitivity ~256 counts/g at +-2 g), X/Y near 0. On tilt/rotate the 1 g
+vector moves cleanly between axes (X up to ~253, Y +246/-287, X -198), magnitude
+staying ~1 g. Values fully responsive to motion. Milestone 1 complete.

@@ -47,6 +47,11 @@ for the design and `docs/superpowers/plans/` for the implementation plan.
 - Live ranging confirmed via initiator RTT: steady `DIST: ~0.73 m` with ~±5 cm
   jitter at rest. UWB hardware validated.
 
+### Milestone 1 complete - accelerometer (LIS2DH12)
+- I2C on TWIM1 (SCL=P1.04, SDA=P0.24), addr auto-probed, 100 Hz, +-2 g.
+- Verified: 1 g on the down axis at rest; gravity vector tracks tilt across all
+  axes; fully responsive to motion. Driver in Src/accel/, image hex/accel_test.hex.
+
 RTT log capture (a few seconds, then Ctrl-C / kill):
 ```bash
 JLinkRTTLogger -Device NRF52833_XXAA -if SWD -Speed 4000 -RTTChannel 0 out.log

@@ -65,6 +65,11 @@
         Name="Debug"
         c_user_include_directories=".;./Src/platform" />
       <file file_name="Src/main.c" />
+      <folder Name="accel">
+        <file file_name="Src/accel/accel.c" />
+        <file file_name="Src/accel/accel.h" />
+        <file file_name="Src/accel/accel_test.c" />
+      </folder>
       <folder Name="SEGGER">
         <file file_name="Src/SEGGER/SEGGER_RTT.c">
           <configuration Name="Debug" build_exclude_from_build="No" />
@@ -244,6 +249,7 @@
           <file file_name="$(NordicSDKDir)/integration/nrfx/legacy/nrf_drv_spi.c" />
           <file file_name="$(NordicSDKDir)/modules/nrfx/drivers/src/prs/nrfx_prs.c" />
           <file file_name="$(NordicSDKDir)/modules/nrfx/drivers/src/nrfx_spim.c" />
+          <file file_name="$(NordicSDKDir)/modules/nrfx/drivers/src/nrfx_twim.c" />
           <file file_name="$(NordicSDKDir)/modules/nrfx/drivers/src/nrfx_gpiote.c" />
           <file file_name="$(NordicSDKDir)/integration/nrfx/legacy/nrf_drv_clock.c" />
           <file file_name="$(NordicSDKDir)/modules/nrfx/drivers/src/nrfx_clock.c" />

@@ -39,6 +39,19 @@ for the design and `docs/superpowers/plans/` for the implementation plan.
   flashing misbehaves, either align the J-Link version or flash via `JLinkExe`
   (`loadfile <fw>.hex`) as the fallback.
 
+### Milestone 0 complete — first light (UWB ranging)
+- Board #1 (J-Link serial **760224825**) → SS-TWR **initiator**.
+- Board #2 (J-Link serial **760224846**) → SS-TWR **responder**.
+- Flashed from host with `JLinkExe loadfile` (see `firmware/roles.md`); prebuilt
+  images in `firmware/hex/{initiator,responder}.hex`.
+- Live ranging confirmed via initiator RTT: steady `DIST: ~0.73 m` with ~±5 cm
+  jitter at rest. UWB hardware validated.
+
+RTT log capture (a few seconds, then Ctrl-C / kill):
+```bash
+JLinkRTTLogger -Device NRF52833_XXAA -if SWD -Speed 4000 -RTTChannel 0 out.log
+```
+
 Direct J-Link sanity check (no nrfjprog):
 ```bash
 cat > /tmp/probe.jlink <<'EOF'

@@ -40,4 +40,4 @@ JLinkExe -CommanderScript /tmp/flash.jlink -AutoConnect 1 -ExitOnError 1
 The initiator's SS-TWR example computes and logs the distance; the responder
 just answers. Distance appears in the initiator's RTT debug log.
 
-Board J-Link serials: #1 = 760224825.
+Board J-Link serials: #1 = 760224825 (initiator), #2 = 760224846 (responder).

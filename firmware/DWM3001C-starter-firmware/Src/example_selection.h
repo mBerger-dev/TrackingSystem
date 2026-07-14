@@ -56,7 +56,10 @@
 //#define TEST_SS_TWR_RESPONDER
 
 // Custom (Milestone 1): LIS2DH12 accelerometer bring-up test
-#define TEST_ACCEL
+//#define TEST_ACCEL
+
+// Custom (Milestone 2a): BLE SoftDevice bring-up + advertising
+#define TEST_BLE
 
 //#define TEST_SS_TWR_INITIATOR_STS
 //#define TEST_SS_TWR_RESPONDER_STS

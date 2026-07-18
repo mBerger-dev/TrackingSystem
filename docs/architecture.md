@@ -100,7 +100,7 @@ unambiguously the coexistence problem and not a BLE bug.
 | M0 — UWB first light | ✅ verified | Two boards range, ~0.73 m stable |
 | M1 — Accelerometer | ✅ verified | LIS2DH12 @ 100 Hz |
 | M2a.1 — BLE advertising | ✅ verified | Tag visible as `DWM-SENSOR` in nRF Connect |
-| **M2a.2 — Accel-over-BLE stream** | ⬜ **next** | GATT notify characteristic; stream `seq/time/accel`, `uwb_mm` = sentinel |
+| **M2a.2 — Accel-over-BLE stream** | ⬜ **next** | GATT notify characteristic; stream `seq/time/accel`, `uwb_mm` = sentinel — [spec](superpowers/specs/2026-07-18-ble-sensor-stream-design.md) |
 | M2b — Live UWB in the stream | ⬜ | Concurrent UWB ranging + BLE; initiator reports real `uwb_mm` |
 | M3 — iOS app | ⬜ (core logic tested) | Central, live view, CSV record/export |
 | M4 — Validation | ⬜ | Bench + worn captures; answer the four spec questions |
@@ -111,3 +111,7 @@ unambiguously the coexistence problem and not a BLE bug.
   only its own data; the phone fuses. Rejected hub-relay and iPhone-native UWB.
 - **2026-07-18 — ADR-2: Sequence M2a.2 (accel-only) before M2b (UWB coexistence).**
   Isolate the risky radio-sharing step from first-time GATT streaming.
+- **2026-07-18 — ADR-3: M2a.2 tag firmware behind a two-function `sensor_ble`
+  interface** (`sensor_ble_init` / `sensor_ble_notify`), with `app_timer`-driven
+  100 Hz sampling and sleep-between (no busy-wait), so `main.c` never touches
+  `sd_*`. Detail in the M2a.2 spec.

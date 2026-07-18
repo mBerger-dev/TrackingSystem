@@ -1,4 +1,41 @@
-# M2 BLE bring-up — debug handoff (resume here)
+# M2 BLE bring-up — debug handoff (RESOLVED)
+
+**Status (2026-07-18): RESOLVED ✅ — board advertises as `DWM-SENSOR`.** The
+investigation below is kept for the record; the root cause and fix are at the top.
+
+## ROOT CAUSE (found 2026-07-18) — stale build object, not a code/config bug
+`app_util_platform.o` was a **stale object** compiled on Jul-13, *before*
+`SOFTDEVICE_PRESENT` was added to `dw3000_api.emProject` (commit 897d257).
+emBuild's incremental build does NOT recompile a `.c` when only the project's
+`c_preprocessor_definitions` change, so that object kept the
+non-SoftDevice `#else` path of `app_util_critical_region_enter`:
+`app_util_disable_irq()` = `cpsid i` → **PRIMASK=1**. Since
+`nrf_sdh_enable_request` wraps `sd_softdevice_enable` in `CRITICAL_REGION_ENTER`,
+the SoftDevice's first `svc` executed with interrupts globally masked → forced
+HardFault (PRIMASK=1 makes SVCall un-takeable → HFSR.FORCED, CFSR=0).
+
+**Proof:** halted the faulted core, `regs` → `CFBP=00000001` i.e. PRIMASK=1
+(BASEPRI/FAULTMASK=0). `objdump -d` of the stale object showed
+`app_util_critical_region_enter` calling `app_util_disable_irq` unconditionally
+(the `#ifdef SOFTDEVICE_PRESENT`-absent shape), despite the emProject defining it.
+
+### The fix
+1. `make clean && make build` — recompiles `app_util_platform.c` *with*
+   `SOFTDEVICE_PRESENT`, so the critical region uses `sd_nvic_critical_region_enter`
+   (software NVIC mask, no PRIMASK) and the SVC works.
+2. Removed the now-duplicate manual `nrf_nvic_state` definition from `ble_test.c`
+   (a workaround for the same stale object; the SDK defines it under
+   SOFTDEVICE_PRESENT, so keeping ours caused a `multiple definition` link error
+   once the object was rebuilt correctly).
+
+**Verified:** RTT shows `nrf_sdh_enable_request -> 0x0` through
+`ble_advertising_start -> 0x0` and `advertising as DWM-SENSOR`; halted CPU parks
+in the SoftDevice `WFE` (IPSR=0, no fault). **Lesson:** after editing emProject
+defines, always `make clean`.
+
+---
+
+## Original investigation (superseded — kept for context)
 
 **Status (2026-07-18):** Milestone 2a.1 (get the board advertising over BLE) is
 **blocked** on a firmware boot fault. This doc captures the full investigation so

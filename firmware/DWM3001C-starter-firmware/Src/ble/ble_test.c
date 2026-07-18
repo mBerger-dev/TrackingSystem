@@ -24,8 +24,8 @@
 
 extern void test_run_info(unsigned char *data);
 
-/* The SoftDevice's NVIC wrapper requires exactly one definition of this. */
-nrf_nvic_state_t nrf_nvic_state = {0};
+/* nrf_nvic_state is defined by the SDK's app_util_platform.c when SOFTDEVICE_PRESENT
+ * is set; do not redefine it here or the link step sees a duplicate symbol. */
 
 #define DEVICE_NAME            "DWM-SENSOR"
 #define APP_BLE_CONN_CFG_TAG   1

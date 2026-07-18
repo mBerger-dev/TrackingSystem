@@ -27,7 +27,7 @@ extern void test_run_info(unsigned char *data);
 /* nrf_nvic_state is defined by the SDK's app_util_platform.c when SOFTDEVICE_PRESENT
  * is set; do not redefine it here or the link step sees a duplicate symbol. */
 
-#define DEVICE_NAME            "DWM-SENSOR"
+#define DEVICE_NAME            "DWM-TEST"
 #define APP_BLE_CONN_CFG_TAG   1
 #define APP_BLE_OBSERVER_PRIO  3
 #define APP_ADV_INTERVAL       64   /* 40 ms, in 0.625 ms units */
@@ -36,10 +36,22 @@ extern void test_run_info(unsigned char *data);
 NRF_BLE_GATT_DEF(m_gatt);
 BLE_ADVERTISING_DEF(m_advertising);
 
+/* Debug: print a step name and its result code over RTT (no hang on error). */
+static void dbg_stmnt(const char *name, ret_code_t err)
+{
+    char buf[64];
+    snprintf(buf, sizeof(buf), "  %s -> 0x%lx", name, (unsigned long)err);
+    test_run_info((unsigned char *)buf);
+}
+
 static uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID;
 
 static void ble_evt_handler(ble_evt_t const *p_ble_evt, void *p_context)
 {
+    char msg[50];
+
+    sprintf(msg, "BLE EVENT ID: %d", p_ble_evt->header.evt_id);
+    test_run_info((unsigned char *)msg);
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_CONNECTED:
@@ -49,9 +61,40 @@ static void ble_evt_handler(ble_evt_t const *p_ble_evt, void *p_context)
 
         case BLE_GAP_EVT_DISCONNECTED:
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
-            test_run_info((unsigned char *)"BLE: disconnected");
+            sprintf(msg, "BLE: disconnected reason=0x%02x",
+                    p_ble_evt->evt.gap_evt.params.disconnected.reason);
+            test_run_info((unsigned char *)msg);
             break;
 
+        case BLE_GAP_EVT_CONN_PARAM_UPDATE:
+            /* Result of the peripheral-initiated PPCP update (S112 is peripheral
+             * only, so there is no REQUEST event to answer). Log the outcome. */
+            sprintf(msg, "BLE: conn param update min=%u max=%u",
+                    p_ble_evt->evt.gap_evt.params.conn_param_update.conn_params.min_conn_interval,
+                    p_ble_evt->evt.gap_evt.params.conn_param_update.conn_params.max_conn_interval);
+            test_run_info((unsigned char *)msg);
+            break;
+        case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
+        {
+            /* The central (phone) requests a PHY change on connect. The peripheral
+             * MUST answer or the Link Layer procedure stalls and the central never
+             * finishes connecting. Let the SoftDevice pick the PHY. */
+            ble_gap_phys_t const phys = {
+                .rx_phys = BLE_GAP_PHY_AUTO,
+                .tx_phys = BLE_GAP_PHY_AUTO,
+            };
+            ret_code_t err = sd_ble_gap_phy_update(
+                p_ble_evt->evt.gap_evt.conn_handle, &phys);
+            dbg_stmnt("sd_ble_gap_phy_update", err);
+            break;
+        }
+        case BLE_GATTS_EVT_SYS_ATTR_MISSING:
+            sd_ble_gatts_sys_attr_set(m_conn_handle,
+                                        NULL,
+                                        0,
+                                        0);
+            test_run_info((unsigned char *)"BLE: BLE_GATTS_EVT_SYS_ATTR_MISSING");
+            break;
         default:
             break;
     }
@@ -59,29 +102,22 @@ static void ble_evt_handler(ble_evt_t const *p_ble_evt, void *p_context)
 
 NRF_SDH_BLE_OBSERVER(m_ble_observer, APP_BLE_OBSERVER_PRIO, ble_evt_handler, NULL);
 
-/* Debug: print a step name and its result code over RTT (no hang on error). */
-static void dbg(const char *name, ret_code_t err)
-{
-    char buf[64];
-    snprintf(buf, sizeof(buf), "  %s -> 0x%lx", name, (unsigned long)err);
-    test_run_info((unsigned char *)buf);
-}
 
 static void ble_stack_init(void)
 {
     ret_code_t err_code = nrf_sdh_enable_request();
-    dbg("nrf_sdh_enable_request", err_code);
+    dbg_stmnt("nrf_sdh_enable_request", err_code);
 
     uint32_t ram_start = 0;
     err_code = nrf_sdh_ble_default_cfg_set(APP_BLE_CONN_CFG_TAG, &ram_start);
-    dbg("nrf_sdh_ble_default_cfg_set", err_code);
+    dbg_stmnt("nrf_sdh_ble_default_cfg_set", err_code);
 
     char b[48];
     snprintf(b, sizeof(b), "  needed ram_start=0x%lx", (unsigned long)ram_start);
     test_run_info((unsigned char *)b);
 
     err_code = nrf_sdh_ble_enable(&ram_start);
-    dbg("nrf_sdh_ble_enable", err_code);
+    dbg_stmnt("nrf_sdh_ble_enable", err_code);
 
     snprintf(b, sizeof(b), "  ram_start after=0x%lx", (unsigned long)ram_start);
     test_run_info((unsigned char *)b);
@@ -145,7 +181,7 @@ int ble_test(void)
     test_run_info((unsigned char *)pb);
 
     ret_code_t err_code = app_timer_init();
-    dbg("app_timer_init", err_code);
+    dbg_stmnt("app_timer_init", err_code);
 
     test_run_info((unsigned char *)"BLE: stack_init...");
     ble_stack_init();
@@ -161,7 +197,7 @@ int ble_test(void)
 
     test_run_info((unsigned char *)"BLE: advertising_start...");
     err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
-    dbg("ble_advertising_start", err_code);
+    dbg_stmnt("ble_advertising_start", err_code);
 
     test_run_info((unsigned char *)"BLE: advertising as DWM-SENSOR");
 

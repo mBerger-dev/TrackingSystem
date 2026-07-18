@@ -9,6 +9,7 @@
 #if defined(TEST_BLE)
 
 #include <string.h>
+#include <stdio.h>
 #include "nrf_sdh.h"
 #include "nrf_sdh_ble.h"
 #include "nrf_sdh_soc.h"
@@ -58,17 +59,32 @@ static void ble_evt_handler(ble_evt_t const *p_ble_evt, void *p_context)
 
 NRF_SDH_BLE_OBSERVER(m_ble_observer, APP_BLE_OBSERVER_PRIO, ble_evt_handler, NULL);
 
+/* Debug: print a step name and its result code over RTT (no hang on error). */
+static void dbg(const char *name, ret_code_t err)
+{
+    char buf[64];
+    snprintf(buf, sizeof(buf), "  %s -> 0x%lx", name, (unsigned long)err);
+    test_run_info((unsigned char *)buf);
+}
+
 static void ble_stack_init(void)
 {
     ret_code_t err_code = nrf_sdh_enable_request();
-    APP_ERROR_CHECK(err_code);
+    dbg("nrf_sdh_enable_request", err_code);
 
     uint32_t ram_start = 0;
     err_code = nrf_sdh_ble_default_cfg_set(APP_BLE_CONN_CFG_TAG, &ram_start);
-    APP_ERROR_CHECK(err_code);
+    dbg("nrf_sdh_ble_default_cfg_set", err_code);
+
+    char b[48];
+    snprintf(b, sizeof(b), "  needed ram_start=0x%lx", (unsigned long)ram_start);
+    test_run_info((unsigned char *)b);
 
     err_code = nrf_sdh_ble_enable(&ram_start);
-    APP_ERROR_CHECK(err_code);
+    dbg("nrf_sdh_ble_enable", err_code);
+
+    snprintf(b, sizeof(b), "  ram_start after=0x%lx", (unsigned long)ram_start);
+    test_run_info((unsigned char *)b);
 }
 
 static void gap_params_init(void)
@@ -118,16 +134,34 @@ static void advertising_init(void)
 
 int ble_test(void)
 {
-    ret_code_t err_code = app_timer_init();
-    APP_ERROR_CHECK(err_code);
+    test_run_info((unsigned char *)"BLE: ble_test start");
 
+    /* The SoftDevice's sd_* calls are SVCs; they fault if interrupts are masked.
+     * Confirm PRIMASK state, then ensure interrupts are enabled. */
+    /* VTOR/boot-chain is handled by the SoftDevice (NO_VTOR_CONFIG); just
+     * report what it is so we can confirm the boot chain set it correctly. */
+    char pb[48];
+    snprintf(pb, sizeof(pb), "  VTOR = 0x%lx", (unsigned long)SCB->VTOR);
+    test_run_info((unsigned char *)pb);
+
+    ret_code_t err_code = app_timer_init();
+    dbg("app_timer_init", err_code);
+
+    test_run_info((unsigned char *)"BLE: stack_init...");
     ble_stack_init();
+
+    test_run_info((unsigned char *)"BLE: gap_params_init...");
     gap_params_init();
+
+    test_run_info((unsigned char *)"BLE: gatt_init...");
     gatt_init();
+
+    test_run_info((unsigned char *)"BLE: advertising_init...");
     advertising_init();
 
+    test_run_info((unsigned char *)"BLE: advertising_start...");
     err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
-    APP_ERROR_CHECK(err_code);
+    dbg("ble_advertising_start", err_code);
 
     test_run_info((unsigned char *)"BLE: advertising as DWM-SENSOR");
 

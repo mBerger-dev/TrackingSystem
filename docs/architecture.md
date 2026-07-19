@@ -100,8 +100,8 @@ unambiguously the coexistence problem and not a BLE bug.
 | M0 — UWB first light | ✅ verified | Two boards range, ~0.73 m stable |
 | M1 — Accelerometer | ✅ verified | LIS2DH12 @ 100 Hz |
 | M2a.1 — BLE advertising | ✅ verified | Tag visible as `DWM-SENSOR` in nRF Connect |
-| **M2a.2 — Accel-over-BLE stream** | ⬜ **next** | GATT notify characteristic; stream `seq/time/accel`, `uwb_mm` = sentinel — [spec](superpowers/specs/2026-07-18-ble-sensor-stream-design.md) |
-| M2b — Live UWB in the stream | ⬜ | Concurrent UWB ranging + BLE; initiator reports real `uwb_mm` |
+| M2a.2 — Accel-over-BLE stream | ✅ verified | GATT notify characteristic; stream `seq/time/accel`, `uwb_mm` = sentinel — [spec](superpowers/specs/2026-07-18-ble-sensor-stream-design.md) |
+| **M2b — Live UWB in the stream** | ⬜ **next** | Concurrent UWB ranging + BLE; initiator reports real `uwb_mm` |
 | M3 — iOS app | ⬜ (core logic tested) | Central, live view, CSV record/export |
 | M4 — Validation | ⬜ | Bench + worn captures; answer the four spec questions |
 
@@ -115,3 +115,6 @@ unambiguously the coexistence problem and not a BLE bug.
   interface** (`sensor_ble_init` / `sensor_ble_notify`), with `app_timer`-driven
   100 Hz sampling and sleep-between (no busy-wait), so `main.c` never touches
   `sd_*`. Detail in the M2a.2 spec.
+- **2026-07-19 — M2a.2 verified:** `DWM-INIT` and `DWM-RESP` both stream accel
+  packets over the sensor characteristic in nRF Connect (`uwb_mm` = sentinel).
+  Working initiator image stashed at `firmware/hex/sensor_stream_init.hex`.

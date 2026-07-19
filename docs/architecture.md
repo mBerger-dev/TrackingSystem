@@ -6,7 +6,11 @@
 > `docs/superpowers/specs/` and `docs/superpowers/plans/`; this file is the
 > higher-altitude "why".
 >
-> **Last updated:** 2026-07-18
+> **Last updated:** 2026-07-19
+>
+> **Diagrams:** `docs/architecture.drawio` is the canonical hardware,
+> execution-context, and software architecture diagram (see §8). Update it in the
+> same commit as the change it describes.
 
 ---
 
@@ -118,3 +122,98 @@ unambiguously the coexistence problem and not a BLE bug.
 - **2026-07-19 — M2a.2 verified:** `DWM-INIT` and `DWM-RESP` both stream accel
   packets over the sensor characteristic in nRF Connect (`uwb_mm` = sentinel).
   Working initiator image stashed at `firmware/hex/sensor_stream_init.hex`.
+
+## 8. System architecture diagrams
+
+**Canonical source: [`docs/architecture.drawio`](architecture.drawio)** — three pages:
+
+| Page | Shows |
+|---|---|
+| 1 · Hardware | Chips, buses, pin assignments, antennas |
+| 2 · Execution and Priorities | NVIC priorities, preemption order, the M2b deadline |
+| 3 · Software layers | Module boundaries and what each layer may call |
+
+Open it in [diagrams.net](https://app.diagrams.net), the VS Code *Draw.io
+Integration* extension, or the desktop app. It is uncompressed XML on purpose, so
+it diffs in review. **Edit the diagram in the same commit as the change it
+describes** — a stale architecture diagram is worse than none.
+
+The reference data below is duplicated here as text so it stays greppable and
+readable without opening a tool. Every value is read from the source; file
+references are given so each can be re-checked rather than trusted.
+
+### 8.1 Radios — no RF coexistence problem
+
+UWB and BLE are **separate chips in separate bands with separate antennas**:
+
+| Radio | Chip | Band | Peripheral |
+|---|---|---|---|
+| UWB | DW3110 | channel 5, 6489.6 MHz | SPIM3 + GPIOTE |
+| BLE | nRF52833 internal | 2.4 GHz | RADIO (owned by S112) |
+
+All contention between them is for **CPU attention**, not airwaves — see §8.3.
+
+### 8.2 Pin and peripheral map
+
+| Signal | Pin | Peripheral | Ref |
+|---|---|---|---|
+| DW3000 SCK | P0.03 | SPIM3 | `custom_board.h:105` |
+| DW3000 MOSI | P0.08 | SPIM3 | `custom_board.h:107` |
+| DW3000 MISO | P0.29 | SPIM3 | `custom_board.h:106` |
+| DW3000 CS | P1.06 | SPIM3 | `custom_board.h:108` |
+| DW3000 RST | P0.25 | GPIO | `custom_board.h:111` |
+| **DW3000 IRQ** | **P1.02** | **GPIOTE** | `custom_board.h:110` |
+| Accel SCL | P1.04 | TWIM1 @ 400 kHz | `accel/accel.c:12` |
+| Accel SDA | P0.24 | TWIM1 @ 400 kHz | `accel/accel.c:13` |
+
+SPI instance: `platform/deca_spi.c:69` (SPIM3). Accel address `0x19`
+(`accel/accel.c:29`). SPIM3 and TWIM1 are distinct instances — no conflict.
+
+### 8.3 Execution contexts and NVIC priorities
+
+S112 reserves priorities 0, 1 and 4, and **cannot be preempted or deferred** by
+application code.
+
+| Pri | Context | Work | Deadline |
+|---|---|---|---|
+| 0 | S112 SoftDevice *(reserved)* | BLE radio / link timing | hard, SD-owned |
+| 1 | S112 SoftDevice *(reserved)* | BLE stack | hard, SD-owned |
+| 2–3 | free | — | — |
+| 4 | S112 SoftDevice *(reserved)* | SVC / SD API calls | — |
+| 5 | free | — | — |
+| **6** | **GPIOTE P1.02 → `deca_irq_handler` → `process_deca_irq` → `dwt_isr`** | DW3000 RX/TX events; responder reads timestamps and arms the delayed reply | **667 µs** ← M2b |
+| 7 | RTC1 `app_timer` | 10 ms tick, sets flags | soft |
+| — | thread mode (`sensor_stream.c`) | accel read, pack 16 B, `hvx` notify, initiator `ranging_exchange()`, `sd_app_evt_wait()` | none |
+
+Preemption order: `0,1,4` → `6` → `7` → thread mode.
+
+Refs: `sdk_config.h:1392` (GPIOTE pri 7), `:1920` (NRFX_GPIOTE pri 6),
+`:6124` (`app_timer` pri 7).
+
+**Residual risk (M2b).** A SoftDevice radio event at priority 0 preempts the
+priority-6 DW3000 ISR. If that delay pushes past 667 µs, the exchange is lost.
+The design **accepts** this: that packet carries `0xFFFFFFFF` and the next
+attempt follows 50 ms later. This is inherent to sharing one CPU with a radio
+stack, not a flaw in the design.
+
+**Open item (M2b).** The worst-case latency for the priority-6 path is **not yet
+measured**. Until it is, "comfortably inside 667 µs" is a design expectation, not
+a verified property.
+
+### 8.4 Software layering
+
+Each hardware concern sits behind a two-function module, so the application never
+calls `sd_*`, `dwt_*` or `nrfx_*` directly (ADR-3).
+
+```
+sensor_stream.c          thread mode · 10 ms tick · builds the 16-byte packet
+    ├── sensor_ble.[ch]  _init / _notify   ──▶  nrf_sdh / S112
+    ├── ranging.[ch]     _init / _exchange ──▶  decadriver dwt_*  ──▶  platform/
+    │   NEW in M2b                                                     deca_spi.c
+    └── accel.[ch]       _init / _read     ──▶  nrfx_twim              port.c
+```
+
+Only `ranging.[ch]` is new in M2b. `sensor_ble.c`, `accel.c` and the platform
+layer are unchanged — `platform/port.c:79,86` already provides `dw_irq_init()`
+and `port_set_dwic_isr()`, so the DW3000 interrupt is wiring to **enable**, not
+wiring to build.

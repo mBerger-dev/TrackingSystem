@@ -1,0 +1,283 @@
+<mxfile host="app.diagrams.net" agent="Claude Code" version="24.7.7" type="device">
+  <diagram name="1 Hardware" id="hardware">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="h0" />
+        <mxCell id="h1" parent="h0" />
+
+        <mxCell id="hModule" value="DWM3001C module" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#8C93A0;dashed=1;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontFamily=Helvetica;fontSize=13;fontStyle=1;fontColor=#5C6470;" vertex="1" parent="h1">
+          <mxGeometry x="40" y="60" width="1000" height="650" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hMcu" value="nRF52833 &#183; Cortex-M4F 64 MHz &#183; S112 SoftDevice" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F5F8;strokeColor=#5C6470;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontFamily=Helvetica;fontSize=12;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="h1">
+          <mxGeometry x="70" y="120" width="520" height="500" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hRadio" value="RADIO&lt;br&gt;2.4 GHz" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8ECFA;strokeColor=#35479B;fontFamily=Helvetica;fontSize=12;fontColor=#171A1F;" vertex="1" parent="h1">
+          <mxGeometry x="100" y="180" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="hRtc" value="RTC1&lt;br&gt;app_timer &#183; 10 ms tick" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EDEFF3;strokeColor=#5C6470;fontFamily=Helvetica;fontSize=12;fontColor=#171A1F;" vertex="1" parent="h1">
+          <mxGeometry x="100" y="260" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="hTwim" value="TWIM1&lt;br&gt;400 kHz" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EDEFF3;strokeColor=#5C6470;fontFamily=Helvetica;fontSize=12;fontColor=#171A1F;" vertex="1" parent="h1">
+          <mxGeometry x="100" y="340" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="hSpim" value="SPIM3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;fontFamily=Helvetica;fontSize=12;fontColor=#171A1F;" vertex="1" parent="h1">
+          <mxGeometry x="100" y="430" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="hGpiote" value="GPIOTE&lt;br&gt;pri 6" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;fontFamily=Helvetica;fontSize=12;fontColor=#171A1F;" vertex="1" parent="h1">
+          <mxGeometry x="100" y="520" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hAccel" value="LIS2DH12&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot;&gt;3-axis accelerometer &#183; addr 0x19&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EDEFF3;strokeColor=#5C6470;fontFamily=Helvetica;fontSize=13;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="h1">
+          <mxGeometry x="700" y="330" width="280" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hDw" value="DW3110&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot;&gt;UWB transceiver&lt;br&gt;channel 5 &#183; 6489.6 MHz&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;fontFamily=Helvetica;fontSize=13;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="h1">
+          <mxGeometry x="700" y="450" width="280" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hBleAnt" value="BLE antenna" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E8ECFA;strokeColor=#35479B;fontFamily=Helvetica;fontSize=11;fontColor=#171A1F;" vertex="1" parent="h1">
+          <mxGeometry x="820" y="180" width="150" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="hUwbAnt" value="UWB antenna" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;fontFamily=Helvetica;fontSize=11;fontColor=#171A1F;" vertex="1" parent="h1">
+          <mxGeometry x="820" y="620" width="150" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hE1" value="SCL P1.04 &#183; SDA P0.24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#5C6470;strokeWidth=2;fontFamily=Helvetica;fontSize=11;fontColor=#5C6470;labelBackgroundColor=#FFFFFF;" edge="1" parent="h1" source="hTwim" target="hAccel">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hE2" value="SCK P0.03 &#183; MOSI P0.08&lt;br&gt;MISO P0.29 &#183; CS P1.06 &#183; RST P0.25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;startArrow=none;strokeColor=#B85C00;strokeWidth=2;fontFamily=Helvetica;fontSize=11;fontColor=#B85C00;labelBackgroundColor=#FFFFFF;" edge="1" parent="h1" source="hSpim" target="hDw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hE3" value="IRQ P1.02 &#8212; the doorbell" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;startArrow=none;strokeColor=#B85C00;strokeWidth=3;dashed=1;fontFamily=Helvetica;fontSize=11;fontStyle=1;fontColor=#B85C00;labelBackgroundColor=#FFFFFF;" edge="1" parent="h1" source="hDw" target="hGpiote">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hE4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;strokeColor=#35479B;strokeWidth=2;" edge="1" parent="h1" source="hRadio" target="hBleAnt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hE5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;strokeColor=#B85C00;strokeWidth=2;" edge="1" parent="h1" source="hDw" target="hUwbAnt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hNote" value="Two independent radios. UWB (6.5 GHz, DW3110) and BLE (2.4 GHz, nRF52833) are separate chips&lt;br&gt;in separate bands with separate antennas &#8212; there is NO RF coexistence problem between them.&lt;br&gt;All contention is for CPU attention. See page 2." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#8C93A0;align=left;spacingLeft=12;fontFamily=Helvetica;fontSize=11;fontColor=#171A1F;" vertex="1" parent="h1">
+          <mxGeometry x="40" y="730" width="1000" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="hRefs" value="Refs: custom_board.h:105-120 (pins) &#183; platform/deca_spi.c:69 (SPIM3) &#183; accel/accel.c:12-13,29 (TWIM1, 0x19)" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Courier New;fontSize=10;fontColor=#5C6470;" vertex="1" parent="h1">
+          <mxGeometry x="40" y="805" width="1000" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="2 Execution and Priorities" id="priorities">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="p0" />
+        <mxCell id="p1" parent="p0" />
+
+        <mxCell id="pTitle" value="Execution contexts and NVIC priorities" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="p1">
+          <mxGeometry x="40" y="40" width="600" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="pSub" value="S112 reserves priorities 0, 1 and 4 and cannot be preempted or deferred by application code." style="text;html=1;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=#5C6470;" vertex="1" parent="p1">
+          <mxGeometry x="40" y="68" width="800" height="24" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pHdrPri" value="PRI" style="text;html=1;align=center;verticalAlign=middle;fontFamily=Courier New;fontSize=11;fontStyle=1;fontColor=#5C6470;" vertex="1" parent="p1">
+          <mxGeometry x="40" y="110" width="60" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="pHdrCtx" value="CONTEXT" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Courier New;fontSize=11;fontStyle=1;fontColor=#5C6470;" vertex="1" parent="p1">
+          <mxGeometry x="115" y="110" width="380" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="pHdrWork" value="WORK" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Courier New;fontSize=11;fontStyle=1;fontColor=#5C6470;" vertex="1" parent="p1">
+          <mxGeometry x="510" y="110" width="330" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="pHdrDl" value="DEADLINE" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Courier New;fontSize=11;fontStyle=1;fontColor=#5C6470;" vertex="1" parent="p1">
+          <mxGeometry x="855" y="110" width="190" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pR0p" value="0" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#35479B;strokeColor=none;fontFamily=Courier New;fontSize=13;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="p1">
+          <mxGeometry x="40" y="140" width="60" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="pR0c" value="S112 SoftDevice   [RESERVED]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8ECFA;strokeColor=#35479B;align=left;spacingLeft=10;fontFamily=Courier New;fontSize=12;fontColor=#171A1F;" vertex="1" parent="p1">
+          <mxGeometry x="115" y="140" width="380" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="pR0w" value="BLE radio / link timing" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;spacingLeft=6;fontFamily=Courier New;fontSize=12;fontColor=#171A1F;" vertex="1" parent="p1">
+          <mxGeometry x="510" y="140" width="330" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="pR0d" value="hard, SD-owned" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;spacingLeft=6;fontFamily=Courier New;fontSize=12;fontColor=#5C6470;" vertex="1" parent="p1">
+          <mxGeometry x="855" y="140" width="190" height="46" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pR1p" value="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#35479B;strokeColor=none;fontFamily=Courier New;fontSize=13;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="p1">
+          <mxGeometry x="40" y="196" width="60" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="pR1c" value="S112 SoftDevice   [RESERVED]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8ECFA;strokeColor=#35479B;align=left;spacingLeft=10;fontFamily=Courier New;fontSize=12;fontColor=#171A1F;" vertex="1" parent="p1">
+          <mxGeometry x="115" y="196" width="380" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="pR1w" value="BLE stack" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;spacingLeft=6;fontFamily=Courier New;fontSize=12;fontColor=#171A1F;" vertex="1" parent="p1">
+          <mxGeometry x="510" y="196" width="330" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="pR1d" value="hard, SD-owned" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;spacingLeft=6;fontFamily=Courier New;fontSize=12;fontColor=#5C6470;" vertex="1" parent="p1">
+          <mxGeometry x="855" y="196" width="190" height="46" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pR2p" value="2 &#183; 3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EDEFF3;strokeColor=none;fontFamily=Courier New;fontSize=12;fontColor=#8C93A0;" vertex="1" parent="p1">
+          <mxGeometry x="40" y="252" width="60" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="pR2c" value="-- free --" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#D5D9E0;dashed=1;align=left;spacingLeft=10;fontFamily=Courier New;fontSize=12;fontColor=#8C93A0;" vertex="1" parent="p1">
+          <mxGeometry x="115" y="252" width="380" height="34" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pR4p" value="4" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#35479B;strokeColor=none;fontFamily=Courier New;fontSize=13;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="p1">
+          <mxGeometry x="40" y="296" width="60" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="pR4c" value="S112 SoftDevice   [RESERVED]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8ECFA;strokeColor=#35479B;align=left;spacingLeft=10;fontFamily=Courier New;fontSize=12;fontColor=#171A1F;" vertex="1" parent="p1">
+          <mxGeometry x="115" y="296" width="380" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="pR4w" value="SVC / SD API calls" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;spacingLeft=6;fontFamily=Courier New;fontSize=12;fontColor=#171A1F;" vertex="1" parent="p1">
+          <mxGeometry x="510" y="296" width="330" height="46" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pR5p" value="5" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EDEFF3;strokeColor=none;fontFamily=Courier New;fontSize=12;fontColor=#8C93A0;" vertex="1" parent="p1">
+          <mxGeometry x="40" y="352" width="60" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="pR5c" value="-- free --" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#D5D9E0;dashed=1;align=left;spacingLeft=10;fontFamily=Courier New;fontSize=12;fontColor=#8C93A0;" vertex="1" parent="p1">
+          <mxGeometry x="115" y="352" width="380" height="34" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pR6p" value="6" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#B85C00;strokeColor=none;fontFamily=Courier New;fontSize=13;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="p1">
+          <mxGeometry x="40" y="396" width="60" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="pR6c" value="GPIOTE  P1.02 rising&lt;br&gt;&#8627; deca_irq_handler&lt;br&gt;&#160;&#160;&#8627; process_deca_irq &#8594; dwt_isr" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;strokeWidth=2;align=left;spacingLeft=10;fontFamily=Courier New;fontSize=12;fontColor=#171A1F;" vertex="1" parent="p1">
+          <mxGeometry x="115" y="396" width="380" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="pR6w" value="DW3000 RX/TX events&lt;br&gt;RESP: read timestamps,&lt;br&gt;arm delayed reply" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;spacingLeft=6;fontFamily=Courier New;fontSize=12;fontColor=#171A1F;" vertex="1" parent="p1">
+          <mxGeometry x="510" y="396" width="330" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="pR6d" value="667 us  &#9664; M2b" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;spacingLeft=6;fontFamily=Courier New;fontSize=12;fontStyle=1;fontColor=#B85C00;" vertex="1" parent="p1">
+          <mxGeometry x="855" y="396" width="190" height="76" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pR7p" value="7" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#8C93A0;strokeColor=none;fontFamily=Courier New;fontSize=13;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="p1">
+          <mxGeometry x="40" y="482" width="60" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="pR7c" value="RTC1 app_timer" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EDEFF3;strokeColor=#5C6470;align=left;spacingLeft=10;fontFamily=Courier New;fontSize=12;fontColor=#171A1F;" vertex="1" parent="p1">
+          <mxGeometry x="115" y="482" width="380" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="pR7w" value="10 ms tick, set flags" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;spacingLeft=6;fontFamily=Courier New;fontSize=12;fontColor=#171A1F;" vertex="1" parent="p1">
+          <mxGeometry x="510" y="482" width="330" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="pR7d" value="soft" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;spacingLeft=6;fontFamily=Courier New;fontSize=12;fontColor=#5C6470;" vertex="1" parent="p1">
+          <mxGeometry x="855" y="482" width="190" height="46" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pRTp" value="&#8212;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EDEFF3;strokeColor=none;fontFamily=Courier New;fontSize=13;fontColor=#5C6470;" vertex="1" parent="p1">
+          <mxGeometry x="40" y="538" width="60" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="pRTc" value="thread mode (main)&lt;br&gt;sensor_stream.c" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F5F8;strokeColor=#5C6470;align=left;spacingLeft=10;fontFamily=Courier New;fontSize=12;fontColor=#171A1F;" vertex="1" parent="p1">
+          <mxGeometry x="115" y="538" width="380" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="pRTw" value="accel read, pack 16 B, hvx notify,&lt;br&gt;INIT: ranging_exchange(),&lt;br&gt;sd_app_evt_wait()" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;spacingLeft=6;fontFamily=Courier New;fontSize=12;fontColor=#171A1F;" vertex="1" parent="p1">
+          <mxGeometry x="510" y="538" width="330" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="pRTd" value="none" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;spacingLeft=6;fontFamily=Courier New;fontSize=12;fontColor=#5C6470;" vertex="1" parent="p1">
+          <mxGeometry x="855" y="538" width="190" height="76" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pPreempt" value="PREEMPTION   0, 1, 4   &#8594;   6   &#8594;   7   &#8594;   thread mode" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#8C93A0;align=left;spacingLeft=12;fontFamily=Courier New;fontSize=12;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="p1">
+          <mxGeometry x="40" y="640" width="1005" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pRisk" value="RESIDUAL RISK &#8212; a SoftDevice radio event (pri 0) preempts the pri-6 DW3000 ISR.&lt;br&gt;If that delay pushes past 667 us the exchange is lost. The design ACCEPTS this: that packet carries&lt;br&gt;0xFFFFFFFF and the next attempt follows 50 ms later. Inherent to sharing one CPU with a radio stack." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;align=left;spacingLeft=12;fontFamily=Helvetica;fontSize=11;fontColor=#171A1F;" vertex="1" parent="p1">
+          <mxGeometry x="40" y="690" width="1005" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pOpen" value="OPEN ITEM (M2b): worst-case latency for the pri-6 path is NOT yet measured. Until it is,&#10;&quot;comfortably inside 667 us&quot; is a design expectation, not a verified property." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#8A1F1F;dashed=1;align=left;spacingLeft=12;fontFamily=Courier New;fontSize=11;fontColor=#8A1F1F;" vertex="1" parent="p1">
+          <mxGeometry x="40" y="770" width="1005" height="45" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pRefs" value="Refs: sdk_config.h:1392 (GPIOTE pri 7) &#183; :1920 (NRFX_GPIOTE pri 6) &#183; :6124 (app_timer pri 7)" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Courier New;fontSize=10;fontColor=#5C6470;" vertex="1" parent="p1">
+          <mxGeometry x="40" y="822" width="1005" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="3 Software layers" id="software">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="s0" />
+        <mxCell id="s1" parent="s0" />
+
+        <mxCell id="sTitle" value="Software layering &#8212; tag firmware" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="s1">
+          <mxGeometry x="40" y="40" width="600" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="sSub" value="Each hardware concern sits behind a two-function module, so the application never calls sd_*, dwt_* or nrfx_* directly (ADR-3)." style="text;html=1;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=#5C6470;" vertex="1" parent="s1">
+          <mxGeometry x="40" y="68" width="900" height="24" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sApp" value="sensor_stream.c&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot;&gt;thread mode &#183; 10 ms tick &#183; builds the 16-byte packet&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F5F8;strokeColor=#171A1F;strokeWidth=2;fontFamily=Helvetica;fontSize=14;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="s1">
+          <mxGeometry x="180" y="130" width="740" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sBle" value="sensor_ble.[ch]&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot;&gt;_init / _notify&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8ECFA;strokeColor=#35479B;fontFamily=Helvetica;fontSize=13;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="s1">
+          <mxGeometry x="180" y="260" width="220" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="sRange" value="ranging.[ch]&#160;&#160;NEW in M2b&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot;&gt;_init / _exchange&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;strokeWidth=3;fontFamily=Helvetica;fontSize=13;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="s1">
+          <mxGeometry x="440" y="260" width="220" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="sAcc" value="accel.[ch]&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot;&gt;_init / _read&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EDEFF3;strokeColor=#5C6470;fontFamily=Helvetica;fontSize=13;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="s1">
+          <mxGeometry x="700" y="260" width="220" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sSdh" value="nrf_sdh / S112 SoftDevice" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8ECFA;strokeColor=#35479B;dashed=1;fontFamily=Helvetica;fontSize=12;fontColor=#171A1F;" vertex="1" parent="s1">
+          <mxGeometry x="180" y="390" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="sDeca" value="decadriver &#183; dwt_*" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;dashed=1;fontFamily=Helvetica;fontSize=12;fontColor=#171A1F;" vertex="1" parent="s1">
+          <mxGeometry x="440" y="390" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="sTwi" value="nrfx_twim" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EDEFF3;strokeColor=#5C6470;dashed=1;fontFamily=Helvetica;fontSize=12;fontColor=#171A1F;" vertex="1" parent="s1">
+          <mxGeometry x="700" y="390" width="220" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sPlat" value="platform/deca_spi.c &#183; platform/port.c&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot;&gt;SPIM3 &#183; GPIOTE &#183; dwt_isr hookup &#8212; already provides dw_irq_init() and port_set_dwic_isr()&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;dashed=1;fontFamily=Helvetica;fontSize=12;fontColor=#171A1F;" vertex="1" parent="s1">
+          <mxGeometry x="380" y="510" width="340" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sHw" value="Hardware &#8212; see page 1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#8C93A0;dashed=1;fontFamily=Helvetica;fontSize=12;fontColor=#5C6470;" vertex="1" parent="s1">
+          <mxGeometry x="180" y="630" width="740" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sEa" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5C6470;strokeWidth=2;" edge="1" parent="s1" source="sApp" target="sBle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sEb" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5C6470;strokeWidth=2;" edge="1" parent="s1" source="sApp" target="sRange">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sEc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5C6470;strokeWidth=2;" edge="1" parent="s1" source="sApp" target="sAcc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sEd" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5C6470;strokeWidth=2;" edge="1" parent="s1" source="sBle" target="sSdh">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sEe" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5C6470;strokeWidth=2;" edge="1" parent="s1" source="sRange" target="sDeca">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sEf" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5C6470;strokeWidth=2;" edge="1" parent="s1" source="sAcc" target="sTwi">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sEg" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5C6470;strokeWidth=2;" edge="1" parent="s1" source="sDeca" target="sPlat">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sEh" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#8C93A0;strokeWidth=1;dashed=1;" edge="1" parent="s1" source="sPlat" target="sHw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sNote" value="Only ranging.[ch] is new in M2b. sensor_ble.c, accel.c and the platform layer are unchanged &#8212;&#10;the DW3000 interrupt is wiring to ENABLE, not wiring to build (platform/port.c:79,86)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#8C93A0;align=left;spacingLeft=12;fontFamily=Helvetica;fontSize=11;fontColor=#171A1F;" vertex="1" parent="s1">
+          <mxGeometry x="180" y="710" width="740" height="55" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

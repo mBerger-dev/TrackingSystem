@@ -121,6 +121,19 @@ roles change together.
 
 ## 6. Verification
 
+**No iOS app required.** Two instruments, each proving a different thing:
+
+- **RTT over USB — proves the number is right.** The initiator prints each accepted
+  `uwb_mm` in decimal via `test_run_info()` (the M0 pattern), captured to a file with
+  `JLinkRTTLogger`. Needed because the criterion is a *delta* between two positions
+  and individual readings jitter, so the check requires averaging several samples —
+  impractical by reading hex on a phone.
+- **nRF Connect — proves the number arrives.** That it reaches bytes 12–15 of the
+  packet at ~20 Hz with accel still streaming on both tags.
+
+RTT is bench-only (USB tether). Worn captures need the iOS app and CSV recording,
+which is M3/M4.
+
 Line-of-sight bench test, both tags powered, phone connected to both in nRF Connect:
 
 - **Scale is correct:** moving the tags from a tape-measured 1.0 m to 2.0 m changes

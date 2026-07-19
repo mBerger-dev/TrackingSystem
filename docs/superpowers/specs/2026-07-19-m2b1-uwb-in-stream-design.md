@@ -123,7 +123,15 @@ roles change together.
 
 Line-of-sight bench test, both tags powered, phone connected to both in nRF Connect:
 
-- `uwb_mm` within ~10 cm of tape-measured 1.0 m and 2.0 m
+- **Scale is correct:** moving the tags from a tape-measured 1.0 m to 2.0 m changes
+  `uwb_mm` by 1.0 m ± ~10 cm. This is the criterion that matters — it proves the
+  time-of-flight maths and the fixed-turnaround assumption are right.
+- **Absolute offset is recorded, not required.** Any constant error common to both
+  distances is uncalibrated antenna delay (stock `16385`), which is a compile-time
+  constant correctable later — and correctable retrospectively in recorded CSV,
+  since captures store raw `uwb_mm`. Note the figure in the milestone write-up;
+  do not fail M2b.1 on it.
+- Readings at a fixed distance are **stable** — spread of a few cm, not metres.
 - fresh measurements arrive at ~20 Hz
 - accel still streams at 100 Hz on **both** tags
 - responder's `uwb_mm` stays at the sentinel permanently
@@ -135,8 +143,11 @@ them would confound a coexistence failure with a blockage failure.
 ## 7. Out of scope
 
 - **NLOS detection and rejection** — M2b.2
-- **Antenna delay recalibration** — M4 (stock `TX_ANT_DLY`/`RX_ANT_DLY` 16385 stand;
-  M0 measured ~0.73 m stable with them)
+- **Antenna delay recalibration** — M4. Stock `TX_ANT_DLY`/`RX_ANT_DLY` = 16385
+  stand; M0 measured ~0.73 m *stable* with them, which is not the same as accurate.
+  Deliberately deferred: the resulting error is a constant offset (≈33 ps per cm),
+  so it can be corrected later by changing two constants — and applied
+  retrospectively to recorded captures. Proving the concept now forecloses nothing.
 - **Dropout statistics, worn captures, phone-side fusion** — M4
 - **iOS app changes** — none; contract unchanged
 

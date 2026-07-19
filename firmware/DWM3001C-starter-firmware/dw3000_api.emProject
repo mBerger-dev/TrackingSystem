@@ -72,6 +72,9 @@
       </folder>
       <folder Name="ble">
         <file file_name="Src/ble/ble_test.c" />
+        <file file_name="Src/ble/sensor_ble.h" />
+        <file file_name="Src/ble/sensor_ble.c" />
+        <file file_name="Src/ble/sensor_stream.c" />
       </folder>
       <folder Name="SEGGER">
         <file file_name="Src/SEGGER/SEGGER_RTT.c">

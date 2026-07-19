@@ -59,7 +59,11 @@
 //#define TEST_ACCEL
 
 // Custom (Milestone 2a): BLE SoftDevice bring-up + advertising
-#define TEST_BLE
+//#define TEST_BLE
+
+// Custom (Milestone 2a.2): accelerometer-over-BLE notify stream
+#define TEST_SENSOR_STREAM
+#define SENSOR_ROLE_INITIATOR   // comment out to build the DWM-RESP responder role
 
 //#define TEST_SS_TWR_INITIATOR_STS
 //#define TEST_SS_TWR_RESPONDER_STS

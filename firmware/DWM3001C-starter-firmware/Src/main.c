@@ -110,7 +110,8 @@ int main(void)
     // extern int rx_send_resp(void); rx_send_resp();
     // extern int ss_twr_responder(void); ss_twr_responder();
     // extern int accel_test(void); accel_test();
-    extern int ble_test(void); ble_test();
+    // extern int ble_test(void); ble_test();
+    extern int sensor_stream(void); sensor_stream();
     // extern int ss_twr_initiator(void); ss_twr_initiator();
     // extern int ss_twr_initiator_sts(void); ss_twr_initiator_sts();
     // extern int ss_twr_responder_sts(void); ss_twr_responder_sts();

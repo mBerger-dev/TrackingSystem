@@ -4,7 +4,7 @@
 
 **Goal:** The initiator streams real tag-to-tag distance in `uwb_mm` at 20 Hz while both tags keep streaming accelerometer data at 100 Hz.
 
-**Architecture:** A new `ranging` module hides all `dwt_*` calls behind `ranging_init()` / `ranging_exchange()`. The responder answers polls from an interrupt (hard 667 µs deadline); the initiator runs one bounded blocking exchange on every fifth accel tick. Spec: `docs/superpowers/specs/2026-07-19-m2b1-uwb-in-stream-design.md`. Diagrams: `docs/architecture.drawio` pages 2 and 4.
+**Architecture:** A new `ranging` module hides all `dwt_*` calls behind `ranging_init()` / `ranging_exchange()`. The responder answers polls from an interrupt (hard 650 µs deadline); the initiator runs one bounded blocking exchange on every fifth accel tick. Spec: `docs/superpowers/specs/2026-07-19-m2b1-uwb-in-stream-design.md`. Diagrams: `docs/architecture.drawio` pages 2 and 4.
 
 **Tech Stack:** nRF5 SDK 17.1.0, S112 SoftDevice, DW3000/DW3110 UWB driver (`Shared/dwt_uwb_driver`), SES/emBuild in Docker, J-Link from macOS host.
 
@@ -33,7 +33,7 @@
 
 ### Task 1: Ranging module skeleton + responder ISR + deadline margin measurement
 
-This is the **de-risking task**. It builds the responder's interrupt path but does *not* send a reply yet — it only measures how much of the 667 µs budget is left at the moment the reply would be armed. If the margin is negative or thin, `POLL_RX_TO_RESP_TX_DLY_UUS` must be raised on both roles before any further work.
+This is the **de-risking task**. It builds the responder's interrupt path but does *not* send a reply yet — it only measures how much of the 650 µs budget is left at the moment the reply would be armed. If the margin is negative or thin, `POLL_RX_TO_RESP_TX_DLY_UUS` must be raised on both roles before any further work.
 
 **Files:**
 - Create: `firmware/DWM3001C-starter-firmware/Src/uwb/ranging.h`
@@ -81,7 +81,7 @@ bool ranging_exchange(uint32_t *out_mm);
 
 ```c
 /* M2b.1: SS-TWR ranging alongside the BLE sensor stream.
- * Responder answers polls from the DW3000 IRQ (hard ~667 us deadline);
+ * Responder answers polls from the DW3000 IRQ (hard ~650 us deadline);
  * initiator runs a bounded blocking exchange. See
  * docs/superpowers/specs/2026-07-19-m2b1-uwb-in-stream-design.md */
 
@@ -95,6 +95,8 @@ bool ranging_exchange(uint32_t *out_mm);
 #include "deca_probe_interface.h"
 #include "port.h"
 #include "deca_spi.h"
+#include "shared_defines.h"    /* UUS_TO_DWT_TIME */
+#include "shared_functions.h"  /* get_rx_timestamp_u64, waitforsysstatus */
 #include "ranging.h"
 
 extern void test_run_info(unsigned char *data);
@@ -693,7 +695,7 @@ git commit -m "chore(fw): M2b.1 verified — stash images, record measured margi
 **Spec coverage:**
 - Real `uwb_mm` at 20 Hz, sentinel otherwise → Task 3 Steps 3–4. ✅
 - Sanity check, reject < 0 or > 50 m → Task 3 Step 3 (`RANGE_MAX_MM`). ✅
-- Responder IRQ-driven, meets 667 µs → Tasks 1–2. ✅
+- Responder IRQ-driven, meets 650 µs → Tasks 1–2. ✅
 - Initiator bounded blocking, every fifth tick → Task 3 Steps 2–4. ✅
 - Module boundary `ranging.{h,c}`, no `dwt_*` in `sensor_stream.c` → Task 1 Steps 1–2. ✅
 - Latency budget measured **before** ranging logic → Task 1 is first and gates Task 2. ✅

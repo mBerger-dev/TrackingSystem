@@ -155,7 +155,7 @@
         <mxCell id="pR6w" value="DW3000 RX/TX events&lt;br&gt;RESP: read timestamps,&lt;br&gt;arm delayed reply" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;spacingLeft=6;fontFamily=Courier New;fontSize=12;fontColor=#171A1F;" vertex="1" parent="p1">
           <mxGeometry x="510" y="396" width="330" height="76" as="geometry" />
         </mxCell>
-        <mxCell id="pR6d" value="667 us  &#9664; M2b" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;spacingLeft=6;fontFamily=Courier New;fontSize=12;fontStyle=1;fontColor=#B85C00;" vertex="1" parent="p1">
+        <mxCell id="pR6d" value="650 us  &#9664; M2b" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;spacingLeft=6;fontFamily=Courier New;fontSize=12;fontStyle=1;fontColor=#B85C00;" vertex="1" parent="p1">
           <mxGeometry x="855" y="396" width="190" height="76" as="geometry" />
         </mxCell>
 
@@ -189,11 +189,11 @@
           <mxGeometry x="40" y="640" width="1005" height="40" as="geometry" />
         </mxCell>
 
-        <mxCell id="pRisk" value="RESIDUAL RISK &#8212; a SoftDevice radio event (pri 0) preempts the pri-6 DW3000 ISR.&lt;br&gt;If that delay pushes past 667 us the exchange is lost. The design ACCEPTS this: that packet carries&lt;br&gt;0xFFFFFFFF and the next attempt follows 50 ms later. Inherent to sharing one CPU with a radio stack." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;align=left;spacingLeft=12;fontFamily=Helvetica;fontSize=11;fontColor=#171A1F;" vertex="1" parent="p1">
+        <mxCell id="pRisk" value="RESIDUAL RISK &#8212; a SoftDevice radio event (pri 0) preempts the pri-6 DW3000 ISR.&lt;br&gt;If that delay pushes past 650 us the exchange is lost. The design ACCEPTS this: that packet carries&lt;br&gt;0xFFFFFFFF and the next attempt follows 50 ms later. Inherent to sharing one CPU with a radio stack." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;align=left;spacingLeft=12;fontFamily=Helvetica;fontSize=11;fontColor=#171A1F;" vertex="1" parent="p1">
           <mxGeometry x="40" y="690" width="1005" height="70" as="geometry" />
         </mxCell>
 
-        <mxCell id="pOpen" value="OPEN ITEM (M2b): worst-case latency for the pri-6 path is NOT yet measured. Until it is,&#10;&quot;comfortably inside 667 us&quot; is a design expectation, not a verified property." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#8A1F1F;dashed=1;align=left;spacingLeft=12;fontFamily=Courier New;fontSize=11;fontColor=#8A1F1F;" vertex="1" parent="p1">
+        <mxCell id="pOpen" value="OPEN ITEM (M2b): worst-case latency for the pri-6 path is NOT yet measured. Until it is,&#10;&quot;comfortably inside 650 us&quot; is a design expectation, not a verified property." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#8A1F1F;dashed=1;align=left;spacingLeft=12;fontFamily=Courier New;fontSize=11;fontColor=#8A1F1F;" vertex="1" parent="p1">
           <mxGeometry x="40" y="770" width="1005" height="45" as="geometry" />
         </mxCell>
 
@@ -290,14 +290,14 @@
         <mxCell id="iTitle" value="Responder interrupt path &#8212; poll RX to reply armed" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="i1">
           <mxGeometry x="40" y="34" width="700" height="28" as="geometry" />
         </mxCell>
-        <mxCell id="iWarn" value="BLOCK WIDTHS ARE PLACEHOLDERS, NOT MEASUREMENTS. Every duration below is unknown until measured &#8212; that is the point of this page.&#10;This doubles as the measurement worksheet for M2b: fill the Measured column, then confirm the sum clears 667 us with margin." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#8A1F1F;dashed=1;align=left;spacingLeft=10;fontFamily=Courier New;fontSize=11;fontColor=#8A1F1F;" vertex="1" parent="i1">
+        <mxCell id="iWarn" value="BLOCK WIDTHS ARE PLACEHOLDERS, NOT MEASUREMENTS. Every duration below is unknown until measured &#8212; that is the point of this page.&#10;This doubles as the measurement worksheet for M2b: fill the Measured column, then confirm the sum clears 650 us with margin." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#8A1F1F;dashed=1;align=left;spacingLeft=10;fontFamily=Courier New;fontSize=11;fontColor=#8A1F1F;" vertex="1" parent="i1">
           <mxGeometry x="40" y="66" width="1005" height="46" as="geometry" />
         </mxCell>
 
         <mxCell id="iT0" value="t = 0&lt;br&gt;poll RX complete,&lt;br&gt;timestamp latched" style="text;html=1;align=left;verticalAlign=top;fontFamily=Courier New;fontSize=10;fontColor=#5C6470;" vertex="1" parent="i1">
           <mxGeometry x="42" y="130" width="150" height="46" as="geometry" />
         </mxCell>
-        <mxCell id="iTend" value="t = 667 us&lt;br&gt;reply MUST be armed" style="text;html=1;align=right;verticalAlign=top;fontFamily=Courier New;fontSize=10;fontStyle=1;fontColor=#8A1F1F;" vertex="1" parent="i1">
+        <mxCell id="iTend" value="t = 650 us&lt;br&gt;reply MUST be armed" style="text;html=1;align=right;verticalAlign=top;fontFamily=Courier New;fontSize=10;fontStyle=1;fontColor=#8A1F1F;" vertex="1" parent="i1">
           <mxGeometry x="860" y="130" width="185" height="46" as="geometry" />
         </mxCell>
 
@@ -339,7 +339,7 @@
           <mxGeometry x="905" y="190" width="140" height="76" as="geometry" />
         </mxCell>
 
-        <mxCell id="iFail" value="If the running total crosses 667 us at ANY point, dwt_starttx(DELAYED) is given a time already in the past.&#10;The hardware rejects it (HPDWARN), no reply is sent, and the initiator times out. That exchange is lost &#8212; by design,&#10;the packet then carries 0xFFFFFFFF and the next attempt follows 50 ms later." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;align=left;spacingLeft=10;fontFamily=Helvetica;fontSize=11;fontColor=#171A1F;" vertex="1" parent="i1">
+        <mxCell id="iFail" value="If the running total crosses 650 us at ANY point, dwt_starttx(DELAYED) is given a time already in the past.&#10;The hardware rejects it (HPDWARN), no reply is sent, and the initiator times out. That exchange is lost &#8212; by design,&#10;the packet then carries 0xFFFFFFFF and the next attempt follows 50 ms later." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;align=left;spacingLeft=10;fontFamily=Helvetica;fontSize=11;fontColor=#171A1F;" vertex="1" parent="i1">
           <mxGeometry x="40" y="284" width="1005" height="60" as="geometry" />
         </mxCell>
 
@@ -415,17 +415,17 @@
         <mxCell id="iBTn" value="&#931;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;strokeWidth=2;fontFamily=Courier New;fontSize=12;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="i1">
           <mxGeometry x="40" y="538" width="40" height="34" as="geometry" />
         </mxCell>
-        <mxCell id="iBTp" value="TOTAL worst case &#8212; must clear 667 us with margin" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;strokeWidth=2;align=left;spacingLeft=8;fontFamily=Courier New;fontSize=11;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="i1">
+        <mxCell id="iBTp" value="TOTAL worst case &#8212; must clear 650 us with margin" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;strokeWidth=2;align=left;spacingLeft=8;fontFamily=Courier New;fontSize=11;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="i1">
           <mxGeometry x="80" y="538" width="450" height="34" as="geometry" />
         </mxCell>
         <mxCell id="iBTm" value="______ us" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;strokeWidth=2;fontFamily=Courier New;fontSize=11;fontStyle=1;fontColor=#B85C00;" vertex="1" parent="i1">
           <mxGeometry x="530" y="538" width="120" height="34" as="geometry" />
         </mxCell>
-        <mxCell id="iBTh" value="if this exceeds 667 us: raise POLL_RX_TO_RESP_TX_DLY_UUS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;strokeWidth=2;align=left;spacingLeft=8;fontFamily=Courier New;fontSize=10;fontColor=#171A1F;" vertex="1" parent="i1">
+        <mxCell id="iBTh" value="if this exceeds 650 us: raise POLL_RX_TO_RESP_TX_DLY_UUS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;strokeWidth=2;align=left;spacingLeft=8;fontFamily=Courier New;fontSize=10;fontColor=#171A1F;" vertex="1" parent="i1">
           <mxGeometry x="650" y="538" width="395" height="34" as="geometry" />
         </mxCell>
 
-        <mxCell id="iEscape" value="THE ESCAPE HATCH &#8212; 667 us is not a hardware limit. It is POLL_RX_TO_RESP_TX_DLY_UUS = 650 (ss_twr_responder.c:77),&#10;a constant compiled into BOTH boards. Raising it buys the responder more time at the cost of a slightly longer exchange.&#10;So a failed budget is a tuning problem, not a redesign &#8212; provided initiator and responder are changed together." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#5C6470;align=left;spacingLeft=10;fontFamily=Helvetica;fontSize=11;fontColor=#171A1F;" vertex="1" parent="i1">
+        <mxCell id="iEscape" value="THE ESCAPE HATCH &#8212; 650 us is not a hardware limit. It is POLL_RX_TO_RESP_TX_DLY_UUS = 650 (ss_twr_responder.c:77),&#10;a constant compiled into BOTH boards. Raising it buys the responder more time at the cost of a slightly longer exchange.&#10;So a failed budget is a tuning problem, not a redesign &#8212; provided initiator and responder are changed together." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#5C6470;align=left;spacingLeft=10;fontFamily=Helvetica;fontSize=11;fontColor=#171A1F;" vertex="1" parent="i1">
           <mxGeometry x="40" y="592" width="1005" height="64" as="geometry" />
         </mxCell>
 

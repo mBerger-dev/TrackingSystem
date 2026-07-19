@@ -11,6 +11,7 @@
 #include "nrf_soc.h"
 #include "accel/accel.h"
 #include "sensor_ble.h"
+#include "uwb/ranging.h"
 
 extern void test_run_info(unsigned char *data);
 
@@ -53,6 +54,11 @@ int sensor_stream(void)
         test_run_info((unsigned char *)"SENSOR: sensor_ble_init FAILED");
         for (;;) { }
     }
+    if (!ranging_init())
+    {
+        test_run_info((unsigned char *)"SENSOR: ranging_init FAILED");
+        for (;;) { }
+    }
 
     err = app_timer_create(&m_sample_timer, APP_TIMER_MODE_REPEATED, sample_timer_handler);
     APP_ERROR_CHECK(err);
@@ -78,6 +84,8 @@ int sensor_stream(void)
             pack_le16(&pkt[10], (uint16_t)z);
             pack_le32(&pkt[12], SENSOR_UWB_SENTINEL);
             sensor_ble_notify(pkt);
+
+            if ((m_seq % 100) == 0) { ranging_report_margin(); }
         }
         (void)sd_app_evt_wait();   /* sleep until the next SoftDevice/app_timer event */
     }

@@ -63,8 +63,14 @@ its own.
 ### 4.1 Responder — interrupt-driven
 
 Hard real-time: from poll reception it has `POLL_RX_TO_RESP_TX_DLY_UUS = 650`
-(≈667 µs, `ss_twr_responder.c:77`) to read timestamps and arm the delayed reply.
-Miss it and the hardware rejects the transmit time as past.
+(`ss_twr_responder.c:77`) to read timestamps and arm the delayed reply. Miss it and
+the hardware rejects the transmit time as past.
+
+**Units trap.** Despite the `_UUS` suffix, this is **650 µs, not 650 UWB-µs**.
+`shared_defines.h:37` sets `UUS_TO_DWT_TIME = 63898`, which is 499.2 × 128 —
+device-time units per *plain* microsecond. Decawave's older DW1000 examples used
+65536 (1 UWB-µs = 1.0256 µs), which would give 667 µs; Qorvo changed it for the
+DW3000. Verify against `shared_defines.h` before quoting any figure derived from it.
 
 A 10 ms main loop cannot serve this — roughly 15× too slow. So the DW3000 IRQ line
 (P1.02) drives the response directly. The main loop is untouched and keeps sleeping
@@ -104,17 +110,17 @@ Role selection reuses the existing `SENSOR_ROLE_INITIATOR` define.
 
 Our DW3000 ISR runs at priority 6; the SoftDevice's radio work runs at priority 0
 and **preempts it**. A BLE connection event landing on an incoming poll can push the
-responder past 667 µs, losing that exchange.
+responder past 650 µs, losing that exchange.
 
 The design **accepts** this loss: that packet carries the sentinel and the next
 attempt follows 50 ms later. This is inherent to sharing one CPU with a radio stack.
 
 **The worst-case latency is not yet measured.** Page 4 of the draw.io breaks the
-path into eight steps with a blank per step. Until filled, "inside 667 µs" is an
+path into eight steps with a blank per step. Until filled, "inside 650 µs" is an
 expectation, not a property — so the implementation plan measures it **first**,
 before either side's ranging logic is written.
 
-**If the budget fails**, 667 µs is not a hardware limit — it is a constant compiled
+**If the budget fails**, 650 µs is not a hardware limit — it is a constant compiled
 into both boards. Raising `POLL_RX_TO_RESP_TX_DLY_UUS` buys time at the cost of a
 marginally longer exchange. A failed budget is tuning, not redesign, provided both
 roles change together.

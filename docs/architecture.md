@@ -198,7 +198,7 @@ application code.
 | 2–3 | free | — | — |
 | 4 | S112 SoftDevice *(reserved)* | SVC / SD API calls | — |
 | 5 | free | — | — |
-| **6** | **GPIOTE P1.02 → `deca_irq_handler` → `process_deca_irq` → `dwt_isr`** | DW3000 RX/TX events; responder reads timestamps and arms the delayed reply | **667 µs** ← M2b |
+| **6** | **GPIOTE P1.02 → `deca_irq_handler` → `process_deca_irq` → `dwt_isr`** | DW3000 RX/TX events; responder reads timestamps and arms the delayed reply | **650 µs** ← M2b |
 | 7 | RTC1 `app_timer` | 10 ms tick, sets flags | soft |
 | — | thread mode (`sensor_stream.c`) | accel read, pack 16 B, `hvx` notify, initiator `ranging_exchange()`, `sd_app_evt_wait()` | none |
 
@@ -208,19 +208,19 @@ Refs: `sdk_config.h:1392` (GPIOTE pri 7), `:1920` (NRFX_GPIOTE pri 6),
 `:6124` (`app_timer` pri 7).
 
 **Residual risk (M2b).** A SoftDevice radio event at priority 0 preempts the
-priority-6 DW3000 ISR. If that delay pushes past 667 µs, the exchange is lost.
+priority-6 DW3000 ISR. If that delay pushes past 650 µs, the exchange is lost.
 The design **accepts** this: that packet carries `0xFFFFFFFF` and the next
 attempt follows 50 ms later. This is inherent to sharing one CPU with a radio
 stack, not a flaw in the design.
 
 **Open item (M2b).** The worst-case latency for the priority-6 path is **not yet
-measured**. Until it is, "comfortably inside 667 µs" is a design expectation, not
+measured**. Until it is, "comfortably inside 650 µs" is a design expectation, not
 a verified property. Page 4 of the draw.io breaks that path into eight steps with
 a blank per step; fill it during implementation using a GPIO toggle on a scope
 for the entry latency and `DWT->CYCCNT` deltas (15.6 ns/tick @ 64 MHz) for the
 ISR body.
 
-**If the budget fails**, 667 µs is not a hardware limit — it is
+**If the budget fails**, 650 µs is not a hardware limit — it is
 `POLL_RX_TO_RESP_TX_DLY_UUS = 650` (`ss_twr_responder.c:77`), a constant compiled
 into both boards. Raising it buys the responder time at the cost of a marginally
 longer exchange. A failed budget is therefore a tuning problem, not a redesign,

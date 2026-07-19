@@ -280,4 +280,163 @@
       </root>
     </mxGraphModel>
   </diagram>
+
+  <diagram name="4 Interrupt path and latency budget" id="irqpath">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="i0" />
+        <mxCell id="i1" parent="i0" />
+
+        <mxCell id="iTitle" value="Responder interrupt path &#8212; poll RX to reply armed" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="40" y="34" width="700" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="iWarn" value="BLOCK WIDTHS ARE PLACEHOLDERS, NOT MEASUREMENTS. Every duration below is unknown until measured &#8212; that is the point of this page.&#10;This doubles as the measurement worksheet for M2b: fill the Measured column, then confirm the sum clears 667 us with margin." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#8A1F1F;dashed=1;align=left;spacingLeft=10;fontFamily=Courier New;fontSize=11;fontColor=#8A1F1F;" vertex="1" parent="i1">
+          <mxGeometry x="40" y="66" width="1005" height="46" as="geometry" />
+        </mxCell>
+
+        <mxCell id="iT0" value="t = 0&lt;br&gt;poll RX complete,&lt;br&gt;timestamp latched" style="text;html=1;align=left;verticalAlign=top;fontFamily=Courier New;fontSize=10;fontColor=#5C6470;" vertex="1" parent="i1">
+          <mxGeometry x="42" y="130" width="150" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="iTend" value="t = 667 us&lt;br&gt;reply MUST be armed" style="text;html=1;align=right;verticalAlign=top;fontFamily=Courier New;fontSize=10;fontStyle=1;fontColor=#8A1F1F;" vertex="1" parent="i1">
+          <mxGeometry x="860" y="130" width="185" height="46" as="geometry" />
+        </mxCell>
+
+        <mxCell id="iAxis" value="" style="endArrow=none;html=1;strokeColor=#171A1F;strokeWidth=2;" edge="1" parent="i1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="45" y="182" as="sourcePoint" />
+            <mxPoint x="1045" y="182" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iDeadline" value="" style="endArrow=none;html=1;strokeColor=#8A1F1F;strokeWidth=3;dashed=1;" edge="1" parent="i1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1045" y="176" as="sourcePoint" />
+            <mxPoint x="1045" y="270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="iS1" value="1&lt;br&gt;IRQ&lt;br&gt;assert&lt;br&gt;? us" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;fontFamily=Courier New;fontSize=9;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="45" y="190" width="60" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="iS2" value="2&lt;br&gt;GPIOTE&#8594;NVIC&lt;br&gt;entry&lt;br&gt;? us" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;fontFamily=Courier New;fontSize=9;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="105" y="190" width="90" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="iS3" value="3&#160;&#160;SoftDevice preemption (pri 0)&lt;br&gt;THE DANGEROUS TERM&lt;br&gt;? us &#8212; unbounded from our side" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8ECFA;strokeColor=#8A1F1F;strokeWidth=3;fontFamily=Courier New;fontSize=10;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="195" y="190" width="270" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="iS4" value="4&lt;br&gt;deca_irq_handler&lt;br&gt;process_deca_irq&lt;br&gt;? us" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;fontFamily=Courier New;fontSize=9;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="465" y="190" width="120" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="iS5" value="5&lt;br&gt;dwt_isr&lt;br&gt;status read&lt;br&gt;SPI &#183; ? us" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;fontFamily=Courier New;fontSize=9;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="585" y="190" width="110" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="iS6" value="6&lt;br&gt;read RX&lt;br&gt;timestamp&lt;br&gt;SPI &#183; ? us" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;fontFamily=Courier New;fontSize=9;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="695" y="190" width="110" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="iS7" value="7&lt;br&gt;validate +&lt;br&gt;build reply&lt;br&gt;? us" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;fontFamily=Courier New;fontSize=9;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="805" y="190" width="100" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="iS8" value="8&lt;br&gt;dwt_starttx&lt;br&gt;DELAYED&lt;br&gt;SPI &#183; ? us" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;strokeWidth=2;fontFamily=Courier New;fontSize=9;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="905" y="190" width="140" height="76" as="geometry" />
+        </mxCell>
+
+        <mxCell id="iFail" value="If the running total crosses 667 us at ANY point, dwt_starttx(DELAYED) is given a time already in the past.&#10;The hardware rejects it (HPDWARN), no reply is sent, and the initiator times out. That exchange is lost &#8212; by design,&#10;the packet then carries 0xFFFFFFFF and the next attempt follows 50 ms later." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;align=left;spacingLeft=10;fontFamily=Helvetica;fontSize=11;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="40" y="284" width="1005" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="iTblTitle" value="Latency budget worksheet &#8212; fill during M2b implementation" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="40" y="360" width="600" height="24" as="geometry" />
+        </mxCell>
+
+        <mxCell id="iH1" value="#" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EDEFF3;strokeColor=#5C6470;fontFamily=Courier New;fontSize=10;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="40" y="390" width="40" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="iH2" value="PATH" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EDEFF3;strokeColor=#5C6470;align=left;spacingLeft=8;fontFamily=Courier New;fontSize=10;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="80" y="390" width="450" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="iH3" value="MEASURED" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EDEFF3;strokeColor=#5C6470;fontFamily=Courier New;fontSize=10;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="530" y="390" width="120" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="iH4" value="HOW TO MEASURE" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EDEFF3;strokeColor=#5C6470;align=left;spacingLeft=8;fontFamily=Courier New;fontSize=10;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="650" y="390" width="395" height="28" as="geometry" />
+        </mxCell>
+
+        <mxCell id="iB1n" value="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#D5D9E0;fontFamily=Courier New;fontSize=10;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="40" y="418" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="iB1p" value="DW3110 asserts IRQ on P1.02" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#D5D9E0;align=left;spacingLeft=8;fontFamily=Courier New;fontSize=10;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="80" y="418" width="450" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="iB1m" value="______ us" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#D5D9E0;fontFamily=Courier New;fontSize=10;fontColor=#8C93A0;" vertex="1" parent="i1">
+          <mxGeometry x="530" y="418" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="iB1h" value="scope: DW3110 IRQ pin vs spare GPIO toggle" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#D5D9E0;align=left;spacingLeft=8;fontFamily=Courier New;fontSize=10;fontColor=#5C6470;" vertex="1" parent="i1">
+          <mxGeometry x="650" y="418" width="395" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="iB2n" value="2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#D5D9E0;fontFamily=Courier New;fontSize=10;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="40" y="448" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="iB2p" value="GPIOTE event to NVIC ISR entry" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#D5D9E0;align=left;spacingLeft=8;fontFamily=Courier New;fontSize=10;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="80" y="448" width="450" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="iB2m" value="______ us" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#D5D9E0;fontFamily=Courier New;fontSize=10;fontColor=#8C93A0;" vertex="1" parent="i1">
+          <mxGeometry x="530" y="448" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="iB2h" value="GPIO toggle first line of deca_irq_handler" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#D5D9E0;align=left;spacingLeft=8;fontFamily=Courier New;fontSize=10;fontColor=#5C6470;" vertex="1" parent="i1">
+          <mxGeometry x="650" y="448" width="395" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="iB3n" value="3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8ECFA;strokeColor=#8A1F1F;fontFamily=Courier New;fontSize=10;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="40" y="478" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="iB3p" value="SoftDevice preemption, worst case  &#8592; DOMINANT UNKNOWN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8ECFA;strokeColor=#8A1F1F;align=left;spacingLeft=8;fontFamily=Courier New;fontSize=10;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="80" y="478" width="450" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="iB3m" value="______ us" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8ECFA;strokeColor=#8A1F1F;fontFamily=Courier New;fontSize=10;fontColor=#8A1F1F;" vertex="1" parent="i1">
+          <mxGeometry x="530" y="478" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="iB3h" value="statistical: log worst delta over minutes, BLE connected" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8ECFA;strokeColor=#8A1F1F;align=left;spacingLeft=8;fontFamily=Courier New;fontSize=10;fontColor=#5C6470;" vertex="1" parent="i1">
+          <mxGeometry x="650" y="478" width="395" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="iB4n" value="4-8" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#D5D9E0;fontFamily=Courier New;fontSize=10;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="40" y="508" width="40" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="iB4p" value="ISR chain + 3 SPI transactions + reply build" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#D5D9E0;align=left;spacingLeft=8;fontFamily=Courier New;fontSize=10;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="80" y="508" width="450" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="iB4m" value="______ us" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#D5D9E0;fontFamily=Courier New;fontSize=10;fontColor=#8C93A0;" vertex="1" parent="i1">
+          <mxGeometry x="530" y="508" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="iB4h" value="DWT CYCCNT delta, ISR entry to exit (15.6 ns/tick @ 64 MHz)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#D5D9E0;align=left;spacingLeft=8;fontFamily=Courier New;fontSize=10;fontColor=#5C6470;" vertex="1" parent="i1">
+          <mxGeometry x="650" y="508" width="395" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="iBTn" value="&#931;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;strokeWidth=2;fontFamily=Courier New;fontSize=12;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="40" y="538" width="40" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="iBTp" value="TOTAL worst case &#8212; must clear 667 us with margin" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;strokeWidth=2;align=left;spacingLeft=8;fontFamily=Courier New;fontSize=11;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="80" y="538" width="450" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="iBTm" value="______ us" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;strokeWidth=2;fontFamily=Courier New;fontSize=11;fontStyle=1;fontColor=#B85C00;" vertex="1" parent="i1">
+          <mxGeometry x="530" y="538" width="120" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="iBTh" value="if this exceeds 667 us: raise POLL_RX_TO_RESP_TX_DLY_UUS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;strokeWidth=2;align=left;spacingLeft=8;fontFamily=Courier New;fontSize=10;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="650" y="538" width="395" height="34" as="geometry" />
+        </mxCell>
+
+        <mxCell id="iEscape" value="THE ESCAPE HATCH &#8212; 667 us is not a hardware limit. It is POLL_RX_TO_RESP_TX_DLY_UUS = 650 (ss_twr_responder.c:77),&#10;a constant compiled into BOTH boards. Raising it buys the responder more time at the cost of a slightly longer exchange.&#10;So a failed budget is a tuning problem, not a redesign &#8212; provided initiator and responder are changed together." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#5C6470;align=left;spacingLeft=10;fontFamily=Helvetica;fontSize=11;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="40" y="592" width="1005" height="64" as="geometry" />
+        </mxCell>
+
+        <mxCell id="iInitNote" value="INITIATOR SIDE has no equivalent deadline &#8212; it transmits on its own schedule and waits for a reply with a bounded&#10;RX timeout (RESP_RX_TIMEOUT_UUS = 400, ss_twr_initiator.c:84). A missed reply costs one measurement, nothing more.&#10;This asymmetry is why only the responder needs the interrupt path (see page 2)." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F4F5F8;strokeColor=#5C6470;align=left;spacingLeft=10;fontFamily=Helvetica;fontSize=11;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="40" y="668" width="1005" height="64" as="geometry" />
+        </mxCell>
+
+        <mxCell id="iRefs" value="Refs: platform/port.c:71 (deca_irq_handler) &#183; :79,86 (dw_irq_init) &#183; :175 (process_deca_irq) &#183; custom_board.h:110 (IRQ P1.02)&#10;      ss_twr_responder.c:77 (POLL_RX_TO_RESP_TX_DLY_UUS 650) &#183; ss_twr_initiator.c:84 (RESP_RX_TIMEOUT_UUS 400)" style="text;html=1;align=left;verticalAlign=top;fontFamily=Courier New;fontSize=10;fontColor=#5C6470;" vertex="1" parent="i1">
+          <mxGeometry x="40" y="744" width="1005" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
 </mxfile>

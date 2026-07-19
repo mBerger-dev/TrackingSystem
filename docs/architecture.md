@@ -132,6 +132,14 @@ unambiguously the coexistence problem and not a BLE bug.
 | 1 · Hardware | Chips, buses, pin assignments, antennas |
 | 2 · Execution and Priorities | NVIC priorities, preemption order, the M2b deadline |
 | 3 · Software layers | Module boundaries and what each layer may call |
+| 4 · Interrupt path and latency budget | The poll-RX-to-reply-armed chain, step by step, with the **measurement worksheet** for M2b |
+
+Page 4 is the one that decides whether M2b works. Pages 1–3 show structure —
+the wire, the priority ranking, the module boundaries. Page 4 shows *behaviour
+over time*: the eight steps between a poll landing and the reply being armed,
+each with a blank to be filled by measurement. **Every duration on it is
+currently unknown**, including the dominant term (SoftDevice preemption), and
+the block widths are placeholders rather than data.
 
 Open it in [diagrams.net](https://app.diagrams.net), the VS Code *Draw.io
 Integration* extension, or the desktop app. It is uncompressed XML on purpose, so
@@ -198,7 +206,16 @@ stack, not a flaw in the design.
 
 **Open item (M2b).** The worst-case latency for the priority-6 path is **not yet
 measured**. Until it is, "comfortably inside 667 µs" is a design expectation, not
-a verified property.
+a verified property. Page 4 of the draw.io breaks that path into eight steps with
+a blank per step; fill it during implementation using a GPIO toggle on a scope
+for the entry latency and `DWT->CYCCNT` deltas (15.6 ns/tick @ 64 MHz) for the
+ISR body.
+
+**If the budget fails**, 667 µs is not a hardware limit — it is
+`POLL_RX_TO_RESP_TX_DLY_UUS = 650` (`ss_twr_responder.c:77`), a constant compiled
+into both boards. Raising it buys the responder time at the cost of a marginally
+longer exchange. A failed budget is therefore a tuning problem, not a redesign,
+provided initiator and responder are changed together.
 
 ### 8.4 Software layering
 

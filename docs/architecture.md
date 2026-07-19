@@ -105,7 +105,8 @@ unambiguously the coexistence problem and not a BLE bug.
 | M1 — Accelerometer | ✅ verified | LIS2DH12 @ 100 Hz |
 | M2a.1 — BLE advertising | ✅ verified | Tag visible as `DWM-SENSOR` in nRF Connect |
 | M2a.2 — Accel-over-BLE stream | ✅ verified | GATT notify characteristic; stream `seq/time/accel`, `uwb_mm` = sentinel — [spec](superpowers/specs/2026-07-18-ble-sensor-stream-design.md) |
-| **M2b — Live UWB in the stream** | ⬜ **next** | Concurrent UWB ranging + BLE; initiator reports real `uwb_mm` |
+| **M2b.1 — Live UWB in the stream** | ⬜ **next** | Concurrent UWB ranging + BLE; initiator reports real `uwb_mm`, line-of-sight — [spec](superpowers/specs/2026-07-19-m2b1-uwb-in-stream-design.md) |
+| M2b.2 — Non-line-of-sight rejection | ⬜ | Body blocks 6.5 GHz; reject reflected-path readings via `dwt_nlos_ipdiag()`, threshold from measured data |
 | M3 — iOS app | ⬜ (core logic tested) | Central, live view, CSV record/export |
 | M4 — Validation | ⬜ | Bench + worn captures; answer the four spec questions |
 
@@ -122,6 +123,14 @@ unambiguously the coexistence problem and not a BLE bug.
 - **2026-07-19 — M2a.2 verified:** `DWM-INIT` and `DWM-RESP` both stream accel
   packets over the sensor characteristic in nRF Connect (`uwb_mm` = sentinel).
   Working initiator image stashed at `firmware/hex/sensor_stream_init.hex`.
+- **2026-07-19 — ADR-4: Split M2b into M2b.1 (mechanism) and M2b.2 (signal
+  quality).** The human body blocks 6.5 GHz substantially, and a blocked direct
+  path with a surviving reflection yields an exchange that *succeeds but reports
+  too long a distance* — a plausible-looking wrong answer that the 50 m sanity
+  clamp cannot catch. Rejecting it needs `dwt_nlos_ipdiag()` and a threshold, but
+  a guessed threshold fails invisibly: over-rejection is indistinguishable from
+  blockage. So M2b.1 proves the pipeline line-of-sight and M2b.2 sets the cutoff
+  from a measured body-blocked run. Same reasoning as ADR-2.
 
 ## 8. System architecture diagrams
 

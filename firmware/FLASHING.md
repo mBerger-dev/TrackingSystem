@@ -103,9 +103,30 @@ pkill -f JLinkRTTLogger
 strings /tmp/rtt.log
 ```
 
-The reset-then-log step matters: without it you often get
-`RTT Control Block not found`, and a stale read can show ghost output from the
-previous image.
+**Always resume afterwards — `pkill` leaves the core halted:**
+
+```bash
+JLinkExe -CommanderScript /dev/stdin >/dev/null 2>&1 <<'EOF'
+si SWD
+speed 4000
+device NRF52833_XXAA
+connect
+g
+q
+EOF
+```
+
+Two traps here, both of which cost time on 2026-07-19:
+
+1. **Attaching to an already-running target usually yields zero lines.** Reset
+   (`r`,`g`) in a *separate* `JLinkExe` call first, then attach — and keep the
+   logger attached for the whole window rather than reattaching.
+2. **`pkill`-ing the logger halts the CPU.** The board stops advertising and
+   looks bricked; it is just paused. Resume with the `g` block above. A reset
+   also works but reboots the app and drops any BLE connection.
+
+Also: a read taken without a reset can show **ghost output from a previous
+boot**. Never diagnose from RTT lines unless you reset immediately before.
 
 ## 7. Stashed images — `firmware/hex/`
 

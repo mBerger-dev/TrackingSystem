@@ -6,6 +6,7 @@
 #if defined(TEST_SENSOR_STREAM)
 
 #include <stdint.h>
+#include <stdio.h>
 #include "app_timer.h"
 #include "app_error.h"
 #include "nrf_soc.h"
@@ -22,6 +23,7 @@ APP_TIMER_DEF(m_sample_timer);
 static volatile bool     m_sample_due    = false;
 static volatile uint32_t m_board_time_ms = 0;
 static uint16_t          m_seq           = 0;
+static uint32_t          m_tick          = 0;
 
 static void sample_timer_handler(void *ctx)
 {
@@ -76,13 +78,29 @@ int sensor_stream(void)
             int16_t x = 0, y = 0, z = 0;
             (void)accel_read(&x, &y, &z);
 
+            /* Range on every 5th tick (50 ms -> 20 Hz). A real value goes only
+             * into the packet carrying a just-succeeded exchange; every other
+             * packet carries the sentinel (see firmware/ble-contract.md). */
+            uint32_t uwb_mm = SENSOR_UWB_SENTINEL;
+            if ((++m_tick % 5) == 0)
+            {
+                uint32_t mm;
+                if (ranging_exchange(&mm))
+                {
+                    uwb_mm = mm;
+                    char dbuf[40];
+                    snprintf(dbuf, sizeof(dbuf), "DIST: %lu mm", (unsigned long)mm);
+                    test_run_info((unsigned char *)dbuf);
+                }
+            }
+
             uint8_t pkt[16];
             pack_le16(&pkt[0],  m_seq++);
             pack_le32(&pkt[2],  m_board_time_ms);
             pack_le16(&pkt[6],  (uint16_t)x);
             pack_le16(&pkt[8],  (uint16_t)y);
             pack_le16(&pkt[10], (uint16_t)z);
-            pack_le32(&pkt[12], SENSOR_UWB_SENTINEL);
+            pack_le32(&pkt[12], uwb_mm);
             sensor_ble_notify(pkt);
 
             if ((m_seq % 100) == 0) { ranging_report_margin(); }

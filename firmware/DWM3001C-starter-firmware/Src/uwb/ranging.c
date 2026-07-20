@@ -61,7 +61,18 @@ static uint8_t tx_resp_msg[] = { 0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 
                                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 #define RESP_MSG_POLL_RX_TS_IDX 10
 #define RESP_MSG_RESP_TX_TS_IDX 14
-#define RESP_MSG_TS_LEN          4
+/* RESP_MSG_TS_LEN and SPEED_OF_LIGHT come from shared_defines.h. */
+
+/* ---- Initiator side ---- */
+static uint8_t tx_poll_msg[] = { 0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0 };
+static const uint8_t rx_resp_msg[] = { 0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0xE1,
+                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+/* Units are UWB microseconds here (the dwt_setrx* API), matching ex_06a. */
+#define POLL_TX_TO_RESP_RX_DLY_UUS 240
+#define RESP_RX_TIMEOUT_UUS        400
+
+#define RANGE_MAX_MM 50000u   /* sanity ceiling, spec section 3 */
 
 static uint8_t frame_seq_nb = 0;
 
@@ -182,6 +193,10 @@ bool ranging_init(void)
     if (!dw_common_init()) { return false; }
 
 #if defined(SENSOR_ROLE_INITIATOR)
+    /* Open the RX window automatically after each poll, and bound the wait so a
+     * missing responder costs ~400 uus rather than blocking the stream. */
+    dwt_setrxaftertxdelay(POLL_TX_TO_RESP_RX_DLY_UUS);
+    dwt_setrxtimeout(RESP_RX_TIMEOUT_UUS);
     test_run_info((unsigned char *)"RANGE: initiator ready");
 #else
     /* dw_irq_init() already ran in main(); we only attach the ISR and enable it. */
@@ -204,8 +219,58 @@ bool ranging_init(void)
 
 bool ranging_exchange(uint32_t *out_mm)
 {
+#if !defined(SENSOR_ROLE_INITIATOR)
     (void)out_mm;
-    return false;   /* implemented in Task 3 */
+    return false;                      /* responder never initiates */
+#else
+    tx_poll_msg[ALL_MSG_SN_IDX] = frame_seq_nb;
+    dwt_writesysstatuslo(DWT_INT_TXFRS_BIT_MASK);
+    dwt_writetxdata(sizeof(tx_poll_msg), tx_poll_msg, 0);
+    dwt_writetxfctrl(sizeof(tx_poll_msg), 0, 1);
+    dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED);
+
+    uint32_t status_reg = 0;
+    waitforsysstatus(&status_reg, NULL,
+                     (DWT_INT_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR), 0);
+    frame_seq_nb++;
+
+    if (!(status_reg & DWT_INT_RXFCG_BIT_MASK))
+    {
+        dwt_writesysstatuslo(SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
+        return false;                  /* timeout or RX error -> sentinel */
+    }
+    dwt_writesysstatuslo(DWT_INT_RXFCG_BIT_MASK);
+
+    uint16_t frame_len = dwt_getframelength();
+    if (frame_len > RX_BUF_LEN) { return false; }
+    dwt_readrxdata(rx_buffer, frame_len, 0);
+
+    rx_buffer[ALL_MSG_SN_IDX] = 0;
+    if (memcmp(rx_buffer, rx_resp_msg, ALL_MSG_COMMON_LEN) != 0) { return false; }
+
+    uint32_t poll_tx_ts = dwt_readtxtimestamplo32();
+    uint32_t resp_rx_ts = dwt_readrxtimestamplo32();
+    float clockOffsetRatio = ((float)dwt_readclockoffset()) / (uint32_t)(1 << 26);
+
+    uint32_t poll_rx_ts, resp_tx_ts;
+    resp_msg_get_ts(&rx_buffer[RESP_MSG_POLL_RX_TS_IDX], &poll_rx_ts);
+    resp_msg_get_ts(&rx_buffer[RESP_MSG_RESP_TX_TS_IDX], &resp_tx_ts);
+
+    int32_t rtd_init = resp_rx_ts - poll_tx_ts;
+    int32_t rtd_resp = resp_tx_ts - poll_rx_ts;
+
+    float tof      = ((rtd_init - rtd_resp * (1.0f - clockOffsetRatio)) / 2.0f) * (float)DWT_TIME_UNITS;
+    float distance = tof * (float)SPEED_OF_LIGHT;
+
+    /* Sanity check (spec section 3). Rejects nonsense rather than fabricating a
+     * number. Does NOT catch NLOS bias -- that is M2b.2. */
+    if (distance < 0.0f) { return false; }
+    float mm = distance * 1000.0f;
+    if (mm > (float)RANGE_MAX_MM) { return false; }
+
+    *out_mm = (uint32_t)mm;
+    return true;
+#endif
 }
 
 #endif /* TEST_SENSOR_STREAM */

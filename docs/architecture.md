@@ -213,8 +213,17 @@ The design **accepts** this: that packet carries `0xFFFFFFFF` and the next
 attempt follows 50 ms later. This is inherent to sharing one CPU with a radio
 stack, not a flaw in the design.
 
-**Open item (M2b).** The worst-case latency for the priority-6 path is **not yet
-measured**. Until it is, "comfortably inside 650 µs" is a design expectation, not
+**MEASURED 2026-07-19 (M2b.1 Task 1).** With BLE **connected** and 119 polls
+observed, the worst deadline margin was **196 µs of the 650 µs budget** (~30%
+headroom). The same firmware with BLE only advertising showed 390–418 µs, so
+SoftDevice preemption costs ~200 µs — confirming it is the dominant term, as the
+design assumed. **Pass**: no change to `POLL_RX_TO_RESP_TX_DLY_UUS` required.
+Caveat: 119 polls (~2 min at 1 Hz) is a small sample for a worst case; the
+`late=` counter added in Task 2 measures missed deadlines directly and is the
+stronger evidence.
+
+**Historical note — the open item this replaced.** The worst-case latency for the
+priority-6 path was **not measured**. Until it is, "comfortably inside 650 µs" is a design expectation, not
 a verified property. Page 4 of the draw.io breaks that path into eight steps with
 a blank per step; fill it during implementation using a GPIO toggle on a scope
 for the entry latency and `DWT->CYCCNT` deltas (15.6 ns/tick @ 64 MHz) for the

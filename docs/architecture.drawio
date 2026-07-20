@@ -418,8 +418,11 @@
         <mxCell id="iBTp" value="TOTAL worst case &#8212; must clear 650 us with margin" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;strokeWidth=2;align=left;spacingLeft=8;fontFamily=Courier New;fontSize=11;fontStyle=1;fontColor=#171A1F;" vertex="1" parent="i1">
           <mxGeometry x="80" y="538" width="450" height="34" as="geometry" />
         </mxCell>
-        <mxCell id="iBTm" value="______ us" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;strokeWidth=2;fontFamily=Courier New;fontSize=11;fontStyle=1;fontColor=#B85C00;" vertex="1" parent="i1">
+        <mxCell id="iBTm" value="454 us used&lt;br&gt;196 us spare" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;strokeWidth=2;fontFamily=Courier New;fontSize=10;fontStyle=1;fontColor=#B85C00;" vertex="1" parent="i1">
           <mxGeometry x="530" y="538" width="120" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="iMeasured" value="MEASURED 2026-07-19 (M2b.1 Task 1), BLE CONNECTED, 119 polls:  worst margin = 196 us of the 650 us budget (~30% headroom).&#10;Same firmware with BLE only advertising showed 390-418 us, so SoftDevice preemption costs ~200 us of margin -- confirming it is the&#10;dominant term. PASS: Task 2 proceeds without raising POLL_RX_TO_RESP_TX_DLY_UUS. Caveat: 119 polls is a small sample for a worst&#10;case; Task 2's late= counter measures missed deadlines directly and is the stronger evidence." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8ECFA;strokeColor=#35479B;strokeWidth=2;align=left;spacingLeft=10;fontFamily=Courier New;fontSize=10;fontColor=#171A1F;" vertex="1" parent="i1">
+          <mxGeometry x="40" y="762" width="1005" height="66" as="geometry" />
         </mxCell>
         <mxCell id="iBTh" value="if this exceeds 650 us: raise POLL_RX_TO_RESP_TX_DLY_UUS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF1E0;strokeColor=#B85C00;strokeWidth=2;align=left;spacingLeft=8;fontFamily=Courier New;fontSize=10;fontColor=#171A1F;" vertex="1" parent="i1">
           <mxGeometry x="650" y="538" width="395" height="34" as="geometry" />

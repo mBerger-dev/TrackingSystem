@@ -128,6 +128,26 @@ Two traps here, both of which cost time on 2026-07-19:
 Also: a read taken without a reset can show **ghost output from a previous
 boot**. Never diagnose from RTT lines unless you reset immediately before.
 
+## 6a. Capturing measurement data — ALWAYS reset first
+
+The RTT buffer retains output from before the logger attached. When capturing
+data to average (e.g. ranging distances at a known separation), **reset the board
+immediately before the capture** or you will silently mix in readings from the
+previous physical setup:
+
+```bash
+JLinkExe -SelectEmuBySN <sn> ... connect / r / g / q      # reset = flush
+sleep 3
+JLinkRTTLogger ... capture.log &                          # then capture
+```
+
+On 2026-07-19 this cost about an hour of M2b.1 bench work: captures taken after
+moving the boards contained a large cluster at the *previous* distance, which
+looked convincingly like a multipath or first-path-detection bug. It was stale
+buffer. Symptom to recognise: **a mode sitting exactly at the last position's
+value.** Also let the boards settle and stop touching them before capturing —
+readings taken mid-move trace the whole trajectory.
+
 ## 7. Stashed images — `firmware/hex/`
 
 | File | What |

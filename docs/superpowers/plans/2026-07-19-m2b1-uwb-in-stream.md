@@ -309,9 +309,9 @@ Expected: two `Program & Verify` `O.K.` lines.
 
 - [ ] **Step 7: Flash the *other* board with the stock SS-TWR initiator as a poll source**
 
-The responder needs someone to poll it. Use the stock example rather than our firmware — it needs no SoftDevice and polls once per second.
+The responder needs someone to poll it. Use the stock example rather than our firmware; it polls once per second. Also add the dispatch swap in `main.c`: comment out `sensor_stream();` and uncomment `ss_twr_initiator();`, or the link fails with `undefined reference to `sensor_stream`.
 
-In `Src/example_selection.h` comment out `TEST_SENSOR_STREAM` and uncomment `#define TEST_SS_TWR_INITIATOR`, then `make clean && make build`, and flash **the second board** (app only, no SoftDevice needed):
+In `Src/example_selection.h` comment out `TEST_SENSOR_STREAM` and uncomment `#define TEST_SS_TWR_INITIATOR`, then `make clean && make build`, and flash **the second board**. NOTE: the SoftDevice is still required — every build in this repo links above it at 0x19000, so an app-only flash leaves 0x0 erased and the board silently does nothing:
 ```bash
 JLinkExe -SelectEmuBySN <second-board-serial> -CommanderScript /dev/stdin <<'EOF'
 si SWD
@@ -319,6 +319,7 @@ speed 4000
 device NRF52833_XXAA
 connect
 erase
+loadfile hex/s112_softdevice.hex
 loadfile DWM3001C-starter-firmware/Output/Common/Exe/dw3000_api.hex
 r
 g

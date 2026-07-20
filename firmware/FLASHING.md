@@ -54,21 +54,24 @@ EOF
 Expect **two** `Program & Verify` `O.K.` lines. Flashing the app alone leaves the
 board silent — it needs the SoftDevice.
 
-## 4b. Flash a stock example — app only, no SoftDevice
+## 4b. Stock examples ALSO need the SoftDevice — use §4a
+
+**There is no app-only path in this repo.** Since S112 was added to the emProject
+(commit `897d257`), *every* build — including the stock Qorvo examples — links
+above the SoftDevice. The app starts at **0x19000**; the chip boots from **0x0**.
+Flash the app alone and 0x0 is erased, so nothing runs.
+
+The failure is silent and convincing: `Program & Verify` reports `O.K.` because
+the bytes really were written. The board is simply dead. Diagnose it by reading
+the RTT control block address from the `.map` and dumping that memory — random
+garbage means `.bss` was never zeroed, i.e. the firmware never started:
 
 ```bash
-JLinkExe -CommanderScript /dev/stdin <<'EOF'
-si SWD
-speed 4000
-device NRF52833_XXAA
-connect
-erase
-loadfile DWM3001C-starter-firmware/Output/Common/Exe/dw3000_api.hex
-r
-g
-q
-EOF
+grep -n "_SEGGER_RTT" DWM3001C-starter-firmware/Output/Common/Exe/dw3000_api.map
+# then: JLinkExe ... mem <addr> 0x30   -> expect "SEGGER RTT" ASCII, not noise
 ```
+
+Use the §4a two-file command for everything.
 
 ## 5. Pick a specific board (when both are connected)
 

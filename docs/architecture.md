@@ -6,7 +6,7 @@
 > `docs/superpowers/specs/` and `docs/superpowers/plans/`; this file is the
 > higher-altitude "why".
 >
-> **Last updated:** 2026-07-19
+> **Last updated:** 2026-07-21
 >
 > **Diagrams:** `docs/architecture.drawio` is the canonical hardware,
 > execution-context, and software architecture diagram (see §8). Update it in the
@@ -106,8 +106,9 @@ unambiguously the coexistence problem and not a BLE bug.
 | M2a.1 — BLE advertising | ✅ verified | Tag visible as `DWM-SENSOR` in nRF Connect |
 | M2a.2 — Accel-over-BLE stream | ✅ verified | GATT notify characteristic; stream `seq/time/accel`, `uwb_mm` = sentinel — [spec](superpowers/specs/2026-07-18-ble-sensor-stream-design.md) |
 | M2b.1 — Live UWB in the stream | ✅ verified | Concurrent UWB ranging + BLE; initiator reports real `uwb_mm`, line-of-sight — [spec](superpowers/specs/2026-07-19-m2b1-uwb-in-stream-design.md) |
-| **M2b.2 — Non-line-of-sight rejection** | ⬜ **next** | Body blocks 6.5 GHz; reject reflected-path readings via `dwt_nlos_ipdiag()`, threshold from measured data |
-| M3 — iOS app | ⬜ (core logic tested) | Central, live view, CSV record/export |
+| **M3a — iOS live view + link measurement** | ⬜ **next** | Connect both tags, live numbers, measure real packet rate / loss — [spec](superpowers/specs/2026-07-21-m3a-ios-live-view-design.md) |
+| M3b — Capture recording | ⬜ | Start/stop capture, CSV persistence, export, background operation |
+| M2b.2 — Non-line-of-sight rejection | ⬜ | Body blocks 6.5 GHz; reject reflected-path readings via `dwt_nlos_ipdiag()`, threshold from measured worn data (needs M3b to record it) |
 | M4 — Validation | ⬜ | Bench + worn captures; answer the four spec questions |
 
 ## 7. Decision log
@@ -148,6 +149,27 @@ unambiguously the coexistence problem and not a BLE bug.
   - **Process note:** several apparent "failures" during this bench session were
     stale RTT buffer and imprecise reference distances, not firmware. See
     `firmware/FLASHING.md` §6a — always reset before a measurement capture.
+
+- **2026-07-21 — ADR-5: Split M3 into M3a (connect + measure) and M3b (record),
+  and sequence both ahead of M2b.2.** Two decisions, one cause.
+
+  *The split:* nobody has measured what fraction of the 100 Hz stream actually
+  reaches the phone. The firmware pushes one notify per 10 ms tick per board and
+  never checks whether `sd_ble_gatts_hvx` accepted it; nRF Connect showed data
+  flowing, which is not the same claim as no loss. Recording is the easy, tested
+  half (`CaptureWriter` exists); throughput is the half that could force firmware
+  changes. Building the recorder first risks finding out afterwards that the data
+  it faithfully recorded was half missing. So M3a measures, M3b records.
+
+  *The reorder:* ADR-4 requires M2b.2's rejection threshold be set from measured
+  body-blocked data with **worn** antennas. Today's only instrument is RTT over a
+  USB tether — bench-only, as the M2b.1 spec states in §6. M2b.2 therefore cannot
+  currently source the data its own ADR demands. M3 builds that instrument, so
+  M2b.2 follows M3b.
+
+  M3a sets **no pass bar** — the measured figure is the deliverable, and M3b
+  proceeds regardless. Same posture as M2b.1 Task 1: measure before building on
+  the assumption. See [spec](superpowers/specs/2026-07-21-m3a-ios-live-view-design.md).
 
 ## 8. System architecture diagrams
 

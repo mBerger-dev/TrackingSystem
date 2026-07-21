@@ -24,12 +24,21 @@ final class BoardModel {
     @ObservationIgnored private var pendingPacket: SensorPacket?
     @ObservationIgnored private var pendingState = "starting"
     @ObservationIgnored private var timer: Timer?
+    @ObservationIgnored private var started = false
 
     init(role: BoardRole) {
         self.role = role
     }
 
     func start() {
+        // onAppear can fire more than once for a scene root; a second call
+        // would build a second BoardLink + timer, delivering every packet
+        // twice. Duplicates hit the fwd==0 branch in LinkStats, which bumps
+        // `received` without touching `expected` — loss would silently read
+        // low and rate would read roughly double.
+        guard !started else { return }
+        started = true
+
         let link = BoardLink(
             role: role,
             onPacket: { [weak self] packet, arrival in
@@ -42,6 +51,13 @@ final class BoardModel {
             onState: { [weak self] state in
                 guard let self else { return }
                 self.lock.lock()
+                // A board that stops streaming ends the current epoch, so
+                // the firmware's seq — which keeps advancing while the link
+                // is down — doesn't get charged to `expected` as loss when
+                // the stream resumes far ahead on reconnect.
+                if state != "streaming" && self.pendingState == "streaming" {
+                    self.pendingStats.endEpoch()
+                }
                 self.pendingState = state
                 self.lock.unlock()
             })
@@ -81,7 +97,14 @@ final class BoardModel {
 final class AppModel {
     let boards: [BoardModel] = BoardRole.allCases.map(BoardModel.init(role:))
 
+    @ObservationIgnored private var started = false
+
     func start() {
+        // Guards against a repeated onAppear firing start() twice; each
+        // BoardModel.start() is itself guarded too, but stopping here also
+        // avoids re-iterating boards needlessly.
+        guard !started else { return }
+        started = true
         boards.forEach { $0.start() }
     }
 }

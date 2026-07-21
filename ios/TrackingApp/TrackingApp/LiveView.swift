@@ -48,11 +48,13 @@ private struct BoardPanel: View {
         }
     }
 
-    /// Raw counts are left-justified 12-bit at +-2 g: 16384 counts per g.
     private var accelText: String {
         guard let p = board.latest else { return "—" }
-        let g = { (raw: Int16) in Double(raw) / 16384.0 }
-        return String(format: "%+.2f  %+.2f  %+.2f g", g(p.ax), g(p.ay), g(p.az))
+        let g = p.accelG
+        // Adding +0.0 normalises negative zero (e.g. -0.001 rounded to 2
+        // places would otherwise print "-0.00"), so tiny negative values
+        // that round to zero don't render a misleading minus sign.
+        return String(format: "%+.2f  %+.2f  %+.2f g", g.x + 0.0, g.y + 0.0, g.z + 0.0)
     }
 
     private var distText: String {

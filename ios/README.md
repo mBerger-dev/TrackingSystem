@@ -28,6 +28,9 @@ Signing uses **free provisioning**, so **builds stop launching after 7 days**.
 Re-deploy from Xcode before a measurement session; a stale build refusing to
 open is expected, not a bug.
 
+If Bluetooth permission is denied, granting it later in Settings requires
+relaunching the app — it does not take effect on the running instance.
+
 First run on a new device, in this order:
 
 1. **Settings → Privacy & Security → Developer Mode** → on → the phone restarts.

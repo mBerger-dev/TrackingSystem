@@ -152,4 +152,24 @@ final class LinkStatsTests: XCTestCase {
         XCTAssertEqual(s.received, 1, "snapshot shows only the reboot epoch")
         XCTAssertEqual(s.expected, 1, "reboot resets counter to 1")
     }
+
+    func testEndEpochThenFarForwardSeqStartsNewEpochInsteadOfHugeLoss() {
+        var stats = LinkStats()
+        feed([1, 2, 3], into: &stats)
+        stats.endEpoch()                      // simulate disconnect
+        stats.record(seq: 5000, at: 5.0)       // reconnect, seq resumed way ahead
+        let s = stats.snapshot
+        XCTAssertEqual(s.epochs, 2, "endEpoch + a far-forward seq must start a new epoch")
+        XCTAssertEqual(s.expected, 1, "the outage must not be charged to expected")
+        XCTAssertEqual(s.lost, 0, "a disconnect must never be reported as packet loss")
+    }
+
+    func testEndEpochOnFreshStatsIsHarmless() {
+        var stats = LinkStats()
+        stats.endEpoch()
+        let s = stats.snapshot
+        XCTAssertEqual(s.epochs, 0, "endEpoch on an unused LinkStats must not fabricate an epoch")
+        XCTAssertEqual(s.received, 0)
+        XCTAssertEqual(s.expected, 0)
+    }
 }

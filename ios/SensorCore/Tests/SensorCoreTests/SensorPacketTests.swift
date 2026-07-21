@@ -53,4 +53,21 @@ final class SensorPacketTests: XCTestCase {
         XCTAssertEqual(p?.boardTimeMs, 4294967294)
         XCTAssertEqual(p?.uwbMm, 65535)
     }
+
+    func test_accelGConvertsRawCountsToG() {
+        // ax=16384, ay=-16384, az=0.
+        var d = Data()
+        d.append(contentsOf: [0x00, 0x00])              // seq
+        d.append(contentsOf: [0x00, 0x00, 0x00, 0x00])  // board_time_ms
+        d.append(contentsOf: [0x00, 0x40])              // ax = 16384
+        d.append(contentsOf: [0x00, 0xC0])              // ay = -16384
+        d.append(contentsOf: [0x00, 0x00])              // az = 0
+        d.append(contentsOf: [0xFF, 0xFF, 0xFF, 0xFF])  // uwb sentinel
+        let p = SensorPacket(d)
+        XCTAssertNotNil(p)
+        let g = p!.accelG
+        XCTAssertEqual(g.x, 1.0, accuracy: 1e-9, "16384 counts must be exactly 1 g")
+        XCTAssertEqual(g.y, -1.0, accuracy: 1e-9, "a negative raw value must give the matching negative g")
+        XCTAssertEqual(g.z, 0.0, accuracy: 1e-9)
+    }
 }

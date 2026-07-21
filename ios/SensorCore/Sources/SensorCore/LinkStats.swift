@@ -76,6 +76,13 @@ public struct LinkStats {
         )
     }
 
+    /// Ends the current counting epoch — call on disconnect, so an outage is
+    /// not charged as packet loss when `seq` resumes far ahead.
+    public mutating func endEpoch() {
+        lastSeq = nil
+        arrivals.removeAll()
+    }
+
     private mutating func startEpoch(at seq: UInt16) {
         lastSeq = seq
         received = 1
@@ -91,6 +98,10 @@ public struct LinkStats {
         }
     }
 
+    // (count-1)/(last-first) measures the span between the first and last
+    // arrival, not a full window's worth of packets, so it biases low by
+    // roughly (N-1)/N — about 0.5% at 100 Hz over a 2 s window (N ~= 200).
+    // That is a property of the estimator, not real packet loss.
     private var rate: Double {
         guard let first = arrivals.first, let lastTime = arrivals.last,
               arrivals.count >= 2, lastTime > first else { return 0 }

@@ -54,7 +54,15 @@ final class BoardLink: NSObject {
 
     private func scan() {
         onState("searching")
-        central.scanForPeripherals(withServices: [Self.serviceUUID])
+        // The firmware puts the service UUID in the SCAN RESPONSE, not the
+        // primary advertisement. iOS usually merges the two, but that's a
+        // known grey area — if it doesn't, filtering on `serviceUUID` here
+        // finds nothing at all. The board name (in the primary advertisement)
+        // is the real discriminator and is what `didDiscover` actually
+        // checks below, so scan unfiltered and let that guard do the work.
+        // Background scanning would require a non-nil service list, but
+        // background operation is out of scope for this milestone.
+        central.scanForPeripherals(withServices: nil)
     }
 }
 
@@ -130,7 +138,10 @@ extension BoardLink: CBPeripheralDelegate {
                     didUpdateValueFor characteristic: CBCharacteristic,
                     error: Error?) {
         // Timestamp first: this is as close to arrival as we can observe.
-        let now = Date().timeIntervalSince1970
+        // Uses the monotonic clock, not wall time: an NTP sync or user clock
+        // change can step Date() backwards, which would violate LinkStats.
+        // record's non-decreasing-time precondition and silently skew rate.
+        let now = ProcessInfo.processInfo.systemUptime
         guard let data = characteristic.value,
               let packet = SensorPacket(data) else { return }
         onPacket(packet, now)

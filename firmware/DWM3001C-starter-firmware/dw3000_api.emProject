@@ -76,6 +76,10 @@
         <file file_name="Src/ble/sensor_ble.c" />
         <file file_name="Src/ble/sensor_stream.c" />
       </folder>
+      <folder Name="uwb">
+        <file file_name="Src/uwb/ranging.h" />
+        <file file_name="Src/uwb/ranging.c" />
+      </folder>
       <folder Name="SEGGER">
         <file file_name="Src/SEGGER/SEGGER_RTT.c">
           <configuration Name="Debug" build_exclude_from_build="No" />

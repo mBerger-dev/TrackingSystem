@@ -20,7 +20,15 @@ without the other.
 | 10     | az             | int16  | raw left-justified LIS2DH12 Z          |
 | 12     | uwb_mm         | uint32 | distance mm; 0xFFFFFFFF = none         |
 
-- Accel raw counts: at rest the down axis reads ~±256 counts after `>>6` (1 g @ ±2 g).
+- Accel raw counts: at rest the down axis reads ~±256 counts after `>>6` (1 g @ ±2 g),
+  i.e. a raw value near `0x4000`.
+- **Reading it by eye in nRF Connect:** the value is shown as 8 groups of 4 hex
+  chars (2 bytes each); accel is groups 4/5/6. Because the data is left-justified
+  *and* little-endian, the **last two hex chars of a group are the signal** and the
+  first two are the noise floor, which churns constantly even at rest. A flat board
+  shows one axis near `…40` (or `…C0`) and the others near `…00`/`…FF`. If the last
+  two characters also jump wildly at rest, that is a genuine fault — the low byte
+  scrambling is not.
 - `uwb_mm = 0xFFFFFFFF` on the responder always, and on the initiator until live
   ranging exists (M2b). In M2a.2 both roles send the sentinel.
 

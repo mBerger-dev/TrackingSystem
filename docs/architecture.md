@@ -105,7 +105,8 @@ unambiguously the coexistence problem and not a BLE bug.
 | M1 — Accelerometer | ✅ verified | LIS2DH12 @ 100 Hz |
 | M2a.1 — BLE advertising | ✅ verified | Tag visible as `DWM-SENSOR` in nRF Connect |
 | M2a.2 — Accel-over-BLE stream | ✅ verified | GATT notify characteristic; stream `seq/time/accel`, `uwb_mm` = sentinel — [spec](superpowers/specs/2026-07-18-ble-sensor-stream-design.md) |
-| **M2b — Live UWB in the stream** | ⬜ **next** | Concurrent UWB ranging + BLE; initiator reports real `uwb_mm` |
+| M2b.1 — Live UWB in the stream | ✅ verified | Concurrent UWB ranging + BLE; initiator reports real `uwb_mm`, line-of-sight — [spec](superpowers/specs/2026-07-19-m2b1-uwb-in-stream-design.md) |
+| **M2b.2 — Non-line-of-sight rejection** | ⬜ **next** | Body blocks 6.5 GHz; reject reflected-path readings via `dwt_nlos_ipdiag()`, threshold from measured data |
 | M3 — iOS app | ⬜ (core logic tested) | Central, live view, CSV record/export |
 | M4 — Validation | ⬜ | Bench + worn captures; answer the four spec questions |
 
@@ -121,7 +122,32 @@ unambiguously the coexistence problem and not a BLE bug.
   `sd_*`. Detail in the M2a.2 spec.
 - **2026-07-19 — M2a.2 verified:** `DWM-INIT` and `DWM-RESP` both stream accel
   packets over the sensor characteristic in nRF Connect (`uwb_mm` = sentinel).
-  Working initiator image stashed at `firmware/hex/sensor_stream_init.hex`.
+  Working initiator image stashed locally at `firmware/hex/sensor_stream_init.hex`
+  (untracked — rebuild from this commit to reproduce it).
+- **2026-07-19 — ADR-4: Split M2b into M2b.1 (mechanism) and M2b.2 (signal
+  quality).** The human body blocks 6.5 GHz substantially, and a blocked direct
+  path with a surviving reflection yields an exchange that *succeeds but reports
+  too long a distance* — a plausible-looking wrong answer that the 50 m sanity
+  clamp cannot catch. Rejecting it needs `dwt_nlos_ipdiag()` and a threshold, but
+  a guessed threshold fails invisibly: over-rejection is indistinguishable from
+  blockage. So M2b.1 proves the pipeline line-of-sight and M2b.2 sets the cutoff
+  from a measured body-blocked run. Same reasoning as ADR-2.
+
+- **2026-07-19 — M2b.1 verified on the bench.** Initiator streams real `uwb_mm`
+  at ~21 readings/sec while both tags stream accel at 100 Hz.
+  - **Scale (pass criterion):** 150 cm → median 1454 mm; 50 cm → median 487 mm;
+    delta **967 mm** for a 1000 mm move (tolerance ±100).
+  - **Stability:** σ = 20 mm at 50 cm (82% within one 100 mm bucket);
+    σ = 100 mm at 150 cm with a ~9% tail reading ~250 mm long — visible multipath,
+    which is M2b.2's target.
+  - **Absolute offset:** −13 mm at 50 cm, −46 mm at 150 cm → a constant ≈ −30 mm,
+    the antenna-delay signature. Recorded, not corrected (deferred to M4).
+  - **Deadline:** worst margin 196 µs of 650 µs with BLE connected;
+    `late=4` of 537 exchanges (**0.7%** lost to SoftDevice preemption), surfacing
+    as sentinels rather than stale values — the accepted failure mode, now measured.
+  - **Process note:** several apparent "failures" during this bench session were
+    stale RTT buffer and imprecise reference distances, not firmware. See
+    `firmware/FLASHING.md` §6a — always reset before a measurement capture.
 
 ## 8. System architecture diagrams
 
@@ -189,7 +215,7 @@ application code.
 | 2–3 | free | — | — |
 | 4 | S112 SoftDevice *(reserved)* | SVC / SD API calls | — |
 | 5 | free | — | — |
-| **6** | **GPIOTE P1.02 → `deca_irq_handler` → `process_deca_irq` → `dwt_isr`** | DW3000 RX/TX events; responder reads timestamps and arms the delayed reply | **667 µs** ← M2b |
+| **6** | **GPIOTE P1.02 → `deca_irq_handler` → `process_deca_irq` → `dwt_isr`** | DW3000 RX/TX events; responder reads timestamps and arms the delayed reply | **650 µs** ← M2b |
 | 7 | RTC1 `app_timer` | 10 ms tick, sets flags | soft |
 | — | thread mode (`sensor_stream.c`) | accel read, pack 16 B, `hvx` notify, initiator `ranging_exchange()`, `sd_app_evt_wait()` | none |
 
@@ -199,19 +225,28 @@ Refs: `sdk_config.h:1392` (GPIOTE pri 7), `:1920` (NRFX_GPIOTE pri 6),
 `:6124` (`app_timer` pri 7).
 
 **Residual risk (M2b).** A SoftDevice radio event at priority 0 preempts the
-priority-6 DW3000 ISR. If that delay pushes past 667 µs, the exchange is lost.
+priority-6 DW3000 ISR. If that delay pushes past 650 µs, the exchange is lost.
 The design **accepts** this: that packet carries `0xFFFFFFFF` and the next
 attempt follows 50 ms later. This is inherent to sharing one CPU with a radio
 stack, not a flaw in the design.
 
-**Open item (M2b).** The worst-case latency for the priority-6 path is **not yet
-measured**. Until it is, "comfortably inside 667 µs" is a design expectation, not
+**MEASURED 2026-07-19 (M2b.1 Task 1).** With BLE **connected** and 119 polls
+observed, the worst deadline margin was **196 µs of the 650 µs budget** (~30%
+headroom). The same firmware with BLE only advertising showed 390–418 µs, so
+SoftDevice preemption costs ~200 µs — confirming it is the dominant term, as the
+design assumed. **Pass**: no change to `POLL_RX_TO_RESP_TX_DLY_UUS` required.
+Caveat: 119 polls (~2 min at 1 Hz) is a small sample for a worst case; the
+`late=` counter added in Task 2 measures missed deadlines directly and is the
+stronger evidence.
+
+**Historical note — the open item this replaced.** The worst-case latency for the
+priority-6 path was **not measured**. Until it is, "comfortably inside 650 µs" is a design expectation, not
 a verified property. Page 4 of the draw.io breaks that path into eight steps with
 a blank per step; fill it during implementation using a GPIO toggle on a scope
 for the entry latency and `DWT->CYCCNT` deltas (15.6 ns/tick @ 64 MHz) for the
 ISR body.
 
-**If the budget fails**, 667 µs is not a hardware limit — it is
+**If the budget fails**, 650 µs is not a hardware limit — it is
 `POLL_RX_TO_RESP_TX_DLY_UUS = 650` (`ss_twr_responder.c:77`), a constant compiled
 into both boards. Raising it buys the responder time at the cost of a marginally
 longer exchange. A failed budget is therefore a tuning problem, not a redesign,

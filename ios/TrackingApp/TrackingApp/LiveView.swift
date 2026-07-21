@@ -48,13 +48,18 @@ private struct BoardPanel: View {
         }
     }
 
+    /// Round to the displayed precision first, so a tiny negative reading
+    /// (raw -1 is -0.00006 g) prints "+0.00" rather than a misleading "-0.00".
+    /// Rounding has to happen before formatting — %.2f alone keeps the sign.
+    private func gText(_ v: Double) -> String {
+        let rounded = (v * 100).rounded() / 100
+        return String(format: "%+.2f", rounded == 0 ? 0 : rounded)
+    }
+
     private var accelText: String {
         guard let p = board.latest else { return "—" }
         let g = p.accelG
-        // Adding +0.0 normalises negative zero (e.g. -0.001 rounded to 2
-        // places would otherwise print "-0.00"), so tiny negative values
-        // that round to zero don't render a misleading minus sign.
-        return String(format: "%+.2f  %+.2f  %+.2f g", g.x + 0.0, g.y + 0.0, g.z + 0.0)
+        return "\(gText(g.x))  \(gText(g.y))  \(gText(g.z)) g"
     }
 
     private var distText: String {

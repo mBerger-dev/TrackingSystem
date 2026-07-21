@@ -291,3 +291,42 @@ Only `ranging.[ch]` is new in M2b. `sensor_ble.c`, `accel.c` and the platform
 layer are unchanged — `platform/port.c:79,86` already provides `dw_irq_init()`
 and `port_set_dwic_isr()`, so the DW3000 interrupt is wiring to **enable**, not
 wiring to build.
+
+## 9. Known issues (robustness debt)
+
+Deliberately unfixed, recorded so they are not rediscovered from scratch.
+
+### 9.1 A failed init hangs the tag silently — no recovery, no indication
+
+**Severity: high for worn use. Found 2026-07-21 during M3a bring-up.**
+
+Both tags were found hung in `for (;;) {}` inside `sensor_stream()`'s
+`accel_init()` failure path. Because `accel_init()` runs **before**
+`sensor_ble_init()`, a hung board never starts advertising: the phone sees
+nothing at all, and the board gives no LED, no packet, and no error anywhere
+an untethered user could observe it. A plain MCU reset cleared it on both
+boards, so the trigger was transient peripheral state — most plausibly an I2C
+transaction interrupted at power-down leaving the LIS2DH12 unresponsive, since
+`accel_init()` fails only when `WHO_AM_I` reads back wrong at *both* candidate
+addresses (`accel.c:71-77`).
+
+The same pattern applies to `sensor_ble_init()` and `ranging_init()`: every
+init failure in `sensor_stream()` ends in an infinite loop.
+
+**Why this matters beyond the bench.** Tethered, it cost ~20 minutes with a
+J-Link to diagnose. Worn, it is a tag that appears to be recording and is not —
+discovered only afterwards, as a capture that stops for no visible reason.
+
+**Fix when M3b or M4 touches firmware:** retry `accel_init()` a few times with a
+short delay; on continued failure, **carry on and advertise anyway** with a
+status bit in the packet marking the accelerometer dead, rather than hanging.
+A tag that reports "my accelerometer is broken" is far more useful than one
+that vanishes. Note this needs a byte in the wire contract, which is frozen —
+so it is a contract change, not a drop-in patch.
+
+**Diagnostic worth reusing:** `JLinkRTTLogger` reported "RTT Control Block not
+found" and was a dead end. Dumping RAM (`savebin ram.bin 0x20000000 0x20000`)
+and running `strings` over it recovered the firmware's printed output directly,
+which is what named the failure. Sampling `PC` several times distinguished a
+tight hang loop (identical address every sample) from normal idling in
+`sd_app_evt_wait()`.

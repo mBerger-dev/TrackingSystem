@@ -140,6 +140,11 @@ static void rx_fail_cb(const dwt_cb_data_t *cb_data)
 
 void ranging_report_margin(void)
 {
+#if !defined(RANGING_DEBUG_RTT)
+    /* The counters keep running either way — they are the deadline evidence, and
+     * a debugger can still read them. Only the printing is compiled out. */
+    return;
+#else
     int32_t ticks = m_worst_margin_ticks;
     char buf[80];
 
@@ -155,6 +160,7 @@ void ranging_report_margin(void)
                  (long)(margin_ns / 1000));
     }
     test_run_info((unsigned char *)buf);
+#endif /* RANGING_DEBUG_RTT */
 }
 
 static bool dw_common_init(void)

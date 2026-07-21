@@ -122,7 +122,8 @@ unambiguously the coexistence problem and not a BLE bug.
   `sd_*`. Detail in the M2a.2 spec.
 - **2026-07-19 — M2a.2 verified:** `DWM-INIT` and `DWM-RESP` both stream accel
   packets over the sensor characteristic in nRF Connect (`uwb_mm` = sentinel).
-  Working initiator image stashed at `firmware/hex/sensor_stream_init.hex`.
+  Working initiator image stashed locally at `firmware/hex/sensor_stream_init.hex`
+  (untracked — rebuild from this commit to reproduce it).
 - **2026-07-19 — ADR-4: Split M2b into M2b.1 (mechanism) and M2b.2 (signal
   quality).** The human body blocks 6.5 GHz substantially, and a blocked direct
   path with a surviving reflection yields an exchange that *succeeds but reports

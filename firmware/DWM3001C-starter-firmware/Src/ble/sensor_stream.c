@@ -88,9 +88,11 @@ int sensor_stream(void)
                 if (ranging_exchange(&mm))
                 {
                     uwb_mm = mm;
+#if defined(RANGING_DEBUG_RTT)
                     char dbuf[40];
                     snprintf(dbuf, sizeof(dbuf), "DIST: %lu mm", (unsigned long)mm);
                     test_run_info((unsigned char *)dbuf);
+#endif
                 }
             }
 
@@ -103,7 +105,9 @@ int sensor_stream(void)
             pack_le32(&pkt[12], uwb_mm);
             sensor_ble_notify(pkt);
 
+#if defined(RANGING_DEBUG_RTT)
             if ((m_seq % 100) == 0) { ranging_report_margin(); }
+#endif
         }
         (void)sd_app_evt_wait();   /* sleep until the next SoftDevice/app_timer event */
     }

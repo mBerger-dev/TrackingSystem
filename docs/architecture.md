@@ -318,6 +318,33 @@ wiring to build.
 
 Deliberately unfixed, recorded so they are not rediscovered from scratch.
 
+**Do 9.2 first.** It is small, self-contained, and it is the one that can
+silently truncate a capture you care about. Fix it before M3b starts recording.
+
+### 9.2 A failed UWB transmit spins the main loop forever
+
+**Severity: high. Found 2026-07-21 in review of the M2b.1 branch. NOT YET FIXED.**
+
+`ranging_exchange()` ignores the return value of `dwt_starttx()`
+(`Src/uwb/ranging.c:230`), then calls `waitforsysstatus()`, which is a bare
+`while` loop with **no software timeout** (`Src/examples/shared_data/
+shared_functions.c:589`). It terminates only because the DW3000's own RX timeout
+eventually sets a status bit.
+
+So if the transmit never starts — SPI glitch, bad radio state — no RX window
+opens, no timeout bit is ever set, and the initiator's main loop spins forever.
+Accel sampling stops, BLE notifications stop. The tag stays *connected* (the
+SoftDevice keeps the link alive from interrupt context), so on the phone it
+looks alive while sending nothing.
+
+**Why fix this before M3b.** M3b records captures. This failure looks exactly
+like a capture that stops for no reason, and would be easy to misattribute to
+the phone, the link, or the recorder — all of which would be innocent.
+
+**Fix:** check `dwt_starttx()`'s return, and put a bound on the wait (a loop
+count, or an `app_timer` deadline). On expiry, return failure so the packet
+carries the sentinel — the same accepted failure mode as a missed deadline.
+
 ### 9.1 A failed init hangs the tag silently — no recovery, no indication
 
 **Severity: high for worn use. Found 2026-07-21 during M3a bring-up.**

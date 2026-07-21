@@ -106,8 +106,8 @@ unambiguously the coexistence problem and not a BLE bug.
 | M2a.1 — BLE advertising | ✅ verified | Tag visible as `DWM-SENSOR` in nRF Connect |
 | M2a.2 — Accel-over-BLE stream | ✅ verified | GATT notify characteristic; stream `seq/time/accel`, `uwb_mm` = sentinel — [spec](superpowers/specs/2026-07-18-ble-sensor-stream-design.md) |
 | M2b.1 — Live UWB in the stream | ✅ verified | Concurrent UWB ranging + BLE; initiator reports real `uwb_mm`, line-of-sight — [spec](superpowers/specs/2026-07-19-m2b1-uwb-in-stream-design.md) |
-| **M3a — iOS live view + link measurement** | ⬜ **next** | Connect both tags, live numbers, measure real packet rate / loss — [spec](superpowers/specs/2026-07-21-m3a-ios-live-view-design.md) |
-| M3b — Capture recording | ⬜ | Start/stop capture, CSV persistence, export, background operation |
+| M3a — iOS live view + link measurement | ✅ verified | Both tags connect; ~99% of the 100 Hz stream arrives — [spec](superpowers/specs/2026-07-21-m3a-ios-live-view-design.md) |
+| **M3b — Capture recording** | ⬜ **next** | Start/stop capture, CSV persistence, export, background operation |
 | M2b.2 — Non-line-of-sight rejection | ⬜ | Body blocks 6.5 GHz; reject reflected-path readings via `dwt_nlos_ipdiag()`, threshold from measured worn data (needs M3b to record it) |
 | M4 — Validation | ⬜ | Bench + worn captures; answer the four spec questions |
 
@@ -170,6 +170,28 @@ unambiguously the coexistence problem and not a BLE bug.
   M3a sets **no pass bar** — the measured figure is the deliverable, and M3b
   proceeds regardless. Same posture as M2b.1 Task 1: measure before building on
   the assumption. See [spec](superpowers/specs/2026-07-21-m3a-ios-live-view-design.md).
+
+- **2026-07-21 — M3a verified. The BLE link is not the bottleneck.** The iOS app
+  connects to both tags and reports live rate and loss.
+  - **DWM-INIT:** ~100 /s, **0.91 % loss** (210 of ~23,000)
+  - **DWM-RESP:** ~100 /s, **0.50 % loss** (124 of ~24,000)
+  - Measured over a continuous ~4-minute foreground run at ~1 m separation. No
+    disconnects occurred in the window — a drop would have started a new epoch
+    and reset the counters, and it did not.
+  - **Interpretation.** ADR-5 set no pass bar, so this is a baseline rather than
+    a pass. Reading it: human movement carries essentially all its energy below
+    ~10–20 Hz, so ~99 % of a 100 Hz stream is not a limiting factor for anything
+    Phase 1 measures. **No firmware follow-up is warranted.**
+  - **A prediction that was wrong, recorded because it shaped the design.** The
+    M3a spec (§5) expected meaningful loss, reasoning that the firmware requests
+    a 20–75 ms connection interval while producing a packet every 10 ms, and
+    never checks whether `sd_ble_gatts_hvx` accepted the packet. The measurement
+    says the SoftDevice's queuing absorbs that comfortably. The unchecked `hvx`
+    return remains a real latent gap — it is simply not costing us packets at
+    this rate. Worth re-measuring if the sample rate ever rises.
+  - Loss *is* observable, which matters: `seq` is stamped before the notify
+    (`sensor_stream.c:100`), so a firmware-side drop leaves a gap the phone can
+    see. The measurement can detect the failure mode it was built to look for.
 
 ## 8. System architecture diagrams
 

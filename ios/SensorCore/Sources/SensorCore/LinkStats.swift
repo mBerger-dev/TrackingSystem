@@ -37,6 +37,9 @@ public struct LinkStats {
         self.rateWindow = rateWindow
     }
 
+    /// Records a packet arrival with its sequence number and wall-clock time.
+    ///
+    /// `time` must be non-decreasing across successive calls to this method.
     public mutating func record(seq: UInt16, at time: TimeInterval) {
         defer { noteArrival(at: time) }
 

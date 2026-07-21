@@ -105,4 +105,51 @@ final class LinkStatsTests: XCTestCase {
         XCTAssertEqual(s.packetsPerSecond, 0.0)
         XCTAssertFalse(s.lossFraction.isNaN, "0/0 must not produce NaN")
     }
+
+    func testBoundary_fwd_equals_32768_is_normal_forward_step() {
+        var stats = LinkStats()
+        stats.record(seq: 1, at: 0.0)
+        // fwd = 32768 means 32767 packets lost + 1 received between seq 1 and 32769
+        stats.record(seq: 32769, at: 0.01)
+        let s = stats.snapshot
+        XCTAssertEqual(s.epochs, 1, "32768 is the inclusive top of the forward range")
+        XCTAssertEqual(s.expected, 32769, "fwd==32768 advances expected by 32768")
+        XCTAssertEqual(s.received, 2, "both packets arrived")
+        XCTAssertEqual(s.lost, 32767, "32768-1 packets were skipped")
+    }
+
+    func testBoundary_fwd_equals_32769_is_reboot() {
+        var stats = LinkStats()
+        stats.record(seq: 1, at: 0.0)
+        // fwd = 32769 exceeds forwardLimit, triggers reboot (not normal forward step)
+        stats.record(seq: 32770, at: 0.01)
+        let s = stats.snapshot
+        XCTAssertEqual(s.epochs, 2, "32769 exceeds forwardLimit and triggers reboot")
+        XCTAssertEqual(s.received, 1, "snapshot shows only the reboot epoch")
+        XCTAssertEqual(s.expected, 1, "reboot resets counter to 1")
+    }
+
+    func testBoundary_reorder_tolerance_exactly_64_is_late_arrival() {
+        var stats = LinkStats()
+        stats.record(seq: 1000, at: 0.0)
+        // fwd = 65472 means 65536 - 65472 = 64 packets late (within tolerance)
+        // This arrives out-of-order but within the reorder window
+        stats.record(seq: 936, at: 0.01)
+        let s = stats.snapshot
+        XCTAssertEqual(s.epochs, 1, "65536-fwd==64 is within reorderTolerance")
+        XCTAssertEqual(s.expected, 1, "late arrival does not advance expected")
+        XCTAssertEqual(s.received, 2, "late packet still counted as received")
+        XCTAssertEqual(s.lost, 0, "late packet fills its gap")
+    }
+
+    func testBoundary_reorder_tolerance_exactly_65_is_reboot() {
+        var stats = LinkStats()
+        stats.record(seq: 1000, at: 0.0)
+        // fwd = 65471 means 65536 - 65471 = 65 packets late (exceeds tolerance)
+        stats.record(seq: 935, at: 0.01)
+        let s = stats.snapshot
+        XCTAssertEqual(s.epochs, 2, "65536-fwd==65 exceeds reorderTolerance, triggers reboot")
+        XCTAssertEqual(s.received, 1, "snapshot shows only the reboot epoch")
+        XCTAssertEqual(s.expected, 1, "reboot resets counter to 1")
+    }
 }

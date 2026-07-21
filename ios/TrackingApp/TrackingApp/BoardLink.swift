@@ -20,7 +20,16 @@ final class BoardLink: NSObject {
     static let sensorUUID  = CBUUID(string: "6E40FE01-B5A3-F393-E0A9-E50E24DCCA9E")
 
     let role: BoardRole
-    private(set) var disconnectCount = 0
+
+    private let countLock = NSLock()
+    private var _disconnectCount = 0
+
+    /// Safe to read from any thread; written on the BLE queue.
+    var disconnectCount: Int {
+        countLock.lock()
+        defer { countLock.unlock() }
+        return _disconnectCount
+    }
 
     private var central: CBCentralManager!
     private var peripheral: CBPeripheral?
@@ -53,7 +62,9 @@ extension BoardLink: CBCentralManagerDelegate {
 
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         switch central.state {
-        case .poweredOn: scan()
+        case .poweredOn:
+            // Redelivered .poweredOn while connected must not start a second scan.
+            if peripheral == nil { scan() }
         case .poweredOff: onState("bluetooth off")
         case .unauthorized: onState("permission denied")
         default: onState("unavailable")
@@ -84,7 +95,9 @@ extension BoardLink: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager,
                         didDisconnectPeripheral peripheral: CBPeripheral,
                         error: Error?) {
-        disconnectCount += 1
+        countLock.lock()
+        _disconnectCount += 1
+        countLock.unlock()
         self.peripheral = nil
         scan()                                  // auto-reconnect
     }

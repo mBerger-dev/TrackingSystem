@@ -6,8 +6,12 @@ struct LiveView: View {
 
     var body: some View {
         NavigationStack {
-            List(model.boards, id: \.role) { board in
-                BoardPanel(board: board)
+            List {
+                RecordBar(rec: model.recording)
+                ForEach(model.boards, id: \.role) { board in
+                    BoardPanel(board: board)
+                }
+                SessionsSection(rec: model.recording)
             }
             .navigationTitle("Tags")
         }
@@ -66,5 +70,71 @@ private struct BoardPanel: View {
         guard let p = board.latest else { return "—" }
         guard let mm = p.uwbMm else { return "—" }
         return "\(mm) mm"
+    }
+}
+
+private struct RecordBar: View {
+    @Bindable var rec: RecordingController
+
+    var body: some View {
+        Section {
+            if rec.isRecording {
+                HStack {
+                    Label(rec.label, systemImage: "record.circle")
+                        .foregroundStyle(.red)
+                    Spacer()
+                    Text(Self.time(rec.elapsed)).monospacedDigit()
+                    Button("Stop", role: .destructive) { rec.stop() }
+                        .buttonStyle(.borderedProminent)
+                }
+                Text(rowSummary)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            } else {
+                HStack {
+                    TextField("label", text: $rec.label)
+                        .textInputAutocapitalization(.never)
+                    Button("Start") { rec.start() }
+                        .buttonStyle(.borderedProminent)
+                }
+            }
+        }
+    }
+
+    private var rowSummary: String {
+        let init_ = rec.countsByBoard["DWM-INIT"] ?? 0
+        let resp = rec.countsByBoard["DWM-RESP"] ?? 0
+        return "\(rec.totalRows) rows  ·  INIT \(init_) / RESP \(resp)"
+    }
+
+    private static func time(_ t: TimeInterval) -> String {
+        String(format: "%02d:%02d", Int(t) / 60, Int(t) % 60)
+    }
+}
+
+private struct SessionsSection: View {
+    @Bindable var rec: RecordingController
+
+    var body: some View {
+        if !rec.sessions.isEmpty {
+            Section("Sessions") {
+                ForEach(rec.sessions) { s in
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(s.name).font(.subheadline)
+                            Text("\(s.rowCount) rows")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        ShareLink(item: s.url)
+                    }
+                }
+                .onDelete { offsets in
+                    offsets.map { rec.sessions[$0] }.forEach(rec.delete)
+                }
+            }
+        }
     }
 }

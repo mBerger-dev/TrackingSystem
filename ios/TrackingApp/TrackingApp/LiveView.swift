@@ -114,7 +114,7 @@ private struct RecordBar: View {
 }
 
 private struct SessionsSection: View {
-    @Bindable var rec: RecordingController
+    let rec: RecordingController
 
     var body: some View {
         if !rec.sessions.isEmpty {

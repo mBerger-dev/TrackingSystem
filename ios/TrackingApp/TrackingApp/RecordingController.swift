@@ -24,10 +24,11 @@ final class RecordingController {
 
     @ObservationIgnored private let lock = NSLock()
     @ObservationIgnored private var session: CaptureSession?
+    @ObservationIgnored private var currentURL: URL?
     @ObservationIgnored private var startUptime: TimeInterval = 0
     @ObservationIgnored private var timer: Timer?
 
-    init() { refreshSessions() }
+    init() { loadExistingSessions() }
 
     private var documentsURL: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -35,12 +36,18 @@ final class RecordingController {
 
     func start() {
         guard !isRecording else { return }
-        let url = documentsURL.appendingPathComponent(Self.fileName(label: label))
+        let url = uniqueURL(label: label)
         let session = CaptureSession(url: url)
-        do { try session.start() } catch { return }
+        do {
+            try session.start()
+        } catch {
+            print("RecordingController: failed to start capture at \(url.lastPathComponent): \(error)")
+            return
+        }
 
         lock.lock()
         self.session = session
+        self.currentURL = url
         self.startUptime = ProcessInfo.processInfo.systemUptime
         lock.unlock()
 
@@ -69,19 +76,32 @@ final class RecordingController {
         guard isRecording else { return }
         lock.lock()
         let session = self.session
+        let url = self.currentURL
         self.session = nil
+        self.currentURL = nil
         lock.unlock()
 
         session?.close()
         timer?.invalidate()
         timer = nil
         isRecording = false
-        refreshSessions()
+
+        // Use the counts we already have — no full re-read of the file.
+        if let session, let url {
+            let finished = RecordedSession(id: url, name: url.lastPathComponent,
+                                           rowCount: session.rowCount)
+            sessions.insert(finished, at: 0)
+        }
     }
 
     func delete(_ session: RecordedSession) {
-        try? FileManager.default.removeItem(at: session.url)
-        refreshSessions()
+        do {
+            try FileManager.default.removeItem(at: session.url)
+        } catch {
+            print("RecordingController: failed to delete \(session.name): \(error)")
+            return
+        }
+        sessions.removeAll { $0.id == session.id }
     }
 
     private func tick() {
@@ -95,11 +115,18 @@ final class RecordingController {
         countsByBoard = session.countsByBoard
     }
 
-    private func refreshSessions() {
+    private func loadExistingSessions() {
+        let dir = documentsURL
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            let loaded = Self.enumerate(dir)
+            DispatchQueue.main.async { self?.sessions = loaded }
+        }
+    }
+
+    private static func enumerate(_ dir: URL) -> [RecordedSession] {
         let fm = FileManager.default
         let urls = (try? fm.contentsOfDirectory(
-            at: documentsURL,
-            includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
+            at: dir, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
         let csvs = urls.filter { $0.pathExtension == "csv" }
         let sorted = csvs.sorted { a, b in
             let da = (try? a.resourceValues(forKeys: [.contentModificationDateKey]))?
@@ -108,8 +135,20 @@ final class RecordingController {
                 .contentModificationDate ?? .distantPast
             return da > db
         }
-        sessions = sorted.map {
-            RecordedSession(id: $0, name: $0.lastPathComponent, rowCount: Self.countRows($0))
+        return sorted.map {
+            RecordedSession(id: $0, name: $0.lastPathComponent, rowCount: countRows($0))
+        }
+    }
+
+    private func uniqueURL(label: String) -> URL {
+        let base = documentsURL.appendingPathComponent(Self.fileName(label: label))
+        guard FileManager.default.fileExists(atPath: base.path) else { return base }
+        let stem = base.deletingPathExtension().lastPathComponent
+        var n = 2
+        while true {
+            let candidate = documentsURL.appendingPathComponent("\(stem)-\(n).csv")
+            if !FileManager.default.fileExists(atPath: candidate.path) { return candidate }
+            n += 1
         }
     }
 

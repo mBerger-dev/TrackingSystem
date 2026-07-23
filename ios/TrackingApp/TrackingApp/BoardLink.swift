@@ -9,6 +9,35 @@ public enum BoardRole: String, CaseIterable {
     case responder = "DWM-RESP"
 }
 
+/// Human-facing connection state for one board's link. A typed enum, not a
+/// bare String, so BoardModel's epoch logic and the view can't silently drift
+/// from the states BoardLink actually emits — renaming a case is a compile
+/// error, not a stat that quietly stops resetting.
+public enum LinkState: Equatable {
+    case starting
+    case searching
+    case connecting
+    case connected
+    case streaming
+    case bluetoothOff
+    case permissionDenied
+    case unavailable
+
+    /// Lower-case label shown in the live view.
+    public var label: String {
+        switch self {
+        case .starting:         return "starting"
+        case .searching:        return "searching"
+        case .connecting:       return "connecting"
+        case .connected:        return "connected"
+        case .streaming:        return "streaming"
+        case .bluetoothOff:     return "bluetooth off"
+        case .permissionDenied: return "permission denied"
+        case .unavailable:      return "unavailable"
+        }
+    }
+}
+
 /// Talks to one tag over BLE and forwards decoded packets upward.
 ///
 /// Deliberately does no arithmetic: rate and loss are computed by `LinkStats`
@@ -34,11 +63,11 @@ final class BoardLink: NSObject {
     private var central: CBCentralManager!
     private var peripheral: CBPeripheral?
     private let onPacket: (SensorPacket, TimeInterval) -> Void
-    private let onState: (String) -> Void
+    private let onState: (LinkState) -> Void
 
     init(role: BoardRole,
          onPacket: @escaping (SensorPacket, TimeInterval) -> Void,
-         onState: @escaping (String) -> Void) {
+         onState: @escaping (LinkState) -> Void) {
         self.role = role
         self.onPacket = onPacket
         self.onState = onState
@@ -53,7 +82,12 @@ final class BoardLink: NSObject {
     }
 
     private func scan() {
-        onState("searching")
+        // Scanning is only legal once the central is powered on; calling it in
+        // any other state is an API-misuse no-op. The callers (disconnect,
+        // connect-failure, power-on) don't all know the current state, so gate
+        // it here rather than at each call site.
+        guard central.state == .poweredOn else { return }
+        onState(.searching)
         // The firmware puts the service UUID in the SCAN RESPONSE, not the
         // primary advertisement. iOS usually merges the two, but that's a
         // known grey area — if it doesn't, filtering on `serviceUUID` here
@@ -73,9 +107,19 @@ extension BoardLink: CBCentralManagerDelegate {
         case .poweredOn:
             // Redelivered .poweredOn while connected must not start a second scan.
             if peripheral == nil { scan() }
-        case .poweredOff: onState("bluetooth off")
-        case .unauthorized: onState("permission denied")
-        default: onState("unavailable")
+        case .poweredOff:
+            // The connection is gone, but iOS does not reliably deliver
+            // didDisconnect for a power-off — so drop the stale peripheral
+            // here. Otherwise the `peripheral == nil` guard above would
+            // suppress the re-scan when Bluetooth comes back, and the link
+            // would never recover until the app is relaunched.
+            peripheral = nil
+            onState(.bluetoothOff)
+        case .unauthorized:
+            onState(.permissionDenied)
+        default:
+            peripheral = nil
+            onState(.unavailable)
         }
     }
 
@@ -91,12 +135,12 @@ extension BoardLink: CBCentralManagerDelegate {
         self.peripheral = peripheral
         peripheral.delegate = self
         central.stopScan()
-        onState("connecting")
+        onState(.connecting)
         central.connect(peripheral)
     }
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        onState("connected")
+        onState(.connected)
         peripheral.discoverServices([Self.serviceUUID])
     }
 
@@ -113,6 +157,7 @@ extension BoardLink: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager,
                         didFailToConnect peripheral: CBPeripheral,
                         error: Error?) {
+        self.peripheral = nil                   // parity with didDisconnect
         scan()
     }
 }
@@ -131,7 +176,7 @@ extension BoardLink: CBPeripheralDelegate {
         guard let ch = service.characteristics?.first(where: { $0.uuid == Self.sensorUUID })
         else { return }
         peripheral.setNotifyValue(true, for: ch)
-        onState("streaming")
+        onState(.streaming)
     }
 
     func peripheral(_ peripheral: CBPeripheral,

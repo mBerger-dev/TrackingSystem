@@ -13,7 +13,7 @@ final class BoardModel {
 
     let role: BoardRole
 
-    var state: String = "starting"
+    var state: LinkState = .starting
     var stats: LinkStats.Snapshot = LinkStats().snapshot
     var latest: SensorPacket?
     var disconnects: Int = 0
@@ -22,7 +22,7 @@ final class BoardModel {
     @ObservationIgnored private let lock = NSLock()
     @ObservationIgnored private var pendingStats = LinkStats()
     @ObservationIgnored private var pendingPacket: SensorPacket?
-    @ObservationIgnored private var pendingState = "starting"
+    @ObservationIgnored private var pendingState: LinkState = .starting
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var started = false
 
@@ -54,9 +54,12 @@ final class BoardModel {
                 // A board that stops streaming ends the current epoch, so
                 // the firmware's seq — which keeps advancing while the link
                 // is down — doesn't get charged to `expected` as loss when
-                // the stream resumes far ahead on reconnect.
-                if state != "streaming" && self.pendingState == "streaming" {
+                // the stream resumes far ahead on reconnect. Drop the last
+                // packet too, so the view stops showing a stale accel and
+                // distance as if the tag were still live.
+                if state != .streaming && self.pendingState == .streaming {
                     self.pendingStats.endEpoch()
+                    self.pendingPacket = nil
                 }
                 self.pendingState = state
                 self.lock.unlock()

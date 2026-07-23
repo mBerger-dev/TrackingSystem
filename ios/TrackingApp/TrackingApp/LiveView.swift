@@ -33,7 +33,7 @@ private struct BoardPanel: View {
             HStack {
                 Text(board.role.rawValue)
                 Spacer()
-                Text(board.state).foregroundStyle(.secondary)
+                Text(board.state.label).foregroundStyle(.secondary)
             }
             .font(.headline)
             .textCase(nil)

@@ -5,7 +5,7 @@ import Foundation
 /// Pure Foundation and handed a URL, so it is verified on a Mac against a temp
 /// file rather than by holding two boards. Writes happen on a dedicated serial
 /// queue, so appending never blocks the caller's thread (the BLE queues).
-@available(macOS 10.15.4, *)
+@available(macOS 10.15.4, iOS 13.4, *)
 public final class CaptureSession {
 
     private let url: URL
@@ -19,7 +19,7 @@ public final class CaptureSession {
     public init(url: URL) { self.url = url }
 
     /// Creates the file and writes the CSV header exactly once.
-    @available(macOS 10.15.4, *)
+    @available(macOS 10.15.4, iOS 13.4, *)
     public func start() throws {
         let header = writer.header() + "\n"
         FileManager.default.createFile(atPath: url.path, contents: Data(header.utf8))
@@ -29,19 +29,24 @@ public final class CaptureSession {
     }
 
     /// Enqueues one row. Non-blocking; ordering follows call order (FIFO queue).
-    @available(macOS 10.15.4, *)
+    @available(macOS 10.15.4, iOS 13.4, *)
     public func append(board: String, phoneArrivalMs: Int64, packet: SensorPacket) {
         queue.async { [weak self] in
             guard let self, let handle = self.handle, !self.closed else { return }
             let line = self.writer.row(board: board, phoneArrivalMs: phoneArrivalMs, packet) + "\n"
-            try? handle.write(contentsOf: Data(line.utf8))
-            self._rowCount += 1
-            self._countsByBoard[board, default: 0] += 1
+            do {
+                try handle.write(contentsOf: Data(line.utf8))
+                self._rowCount += 1
+                self._countsByBoard[board, default: 0] += 1
+            } catch {
+                // Write failed (e.g. disk full). Best-effort recording: don't
+                // crash, but don't count a row that isn't on disk either.
+            }
         }
     }
 
     /// Flushes queued writes and closes the file. Safe to call more than once.
-    @available(macOS 10.15.4, *)
+    @available(macOS 10.15.4, iOS 13.4, *)
     public func close() {
         queue.sync {
             guard !closed else { return }

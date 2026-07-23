@@ -119,7 +119,14 @@ final class RecordingController {
         let dir = documentsURL
         DispatchQueue.global(qos: .utility).async { [weak self] in
             let loaded = Self.enumerate(dir)
-            DispatchQueue.main.async { self?.sessions = loaded }
+            DispatchQueue.main.async {
+                guard let self else { return }
+                // Merge, don't overwrite: a stop() during the async load may have
+                // already inserted a just-finished session. Keep those (they are
+                // newest, so stay at the front) and append the rest, deduped by id.
+                let present = Set(self.sessions.map(\.id))
+                self.sessions += loaded.filter { !present.contains($0.id) }
+            }
         }
     }
 

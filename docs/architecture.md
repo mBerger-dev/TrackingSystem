@@ -6,7 +6,7 @@
 > `docs/superpowers/specs/` and `docs/superpowers/plans/`; this file is the
 > higher-altitude "why".
 >
-> **Last updated:** 2026-07-19
+> **Last updated:** 2026-07-21
 >
 > **Diagrams:** `docs/architecture.drawio` is the canonical hardware,
 > execution-context, and software architecture diagram (see §8). Update it in the
@@ -106,8 +106,9 @@ unambiguously the coexistence problem and not a BLE bug.
 | M2a.1 — BLE advertising | ✅ verified | Tag visible as `DWM-SENSOR` in nRF Connect |
 | M2a.2 — Accel-over-BLE stream | ✅ verified | GATT notify characteristic; stream `seq/time/accel`, `uwb_mm` = sentinel — [spec](superpowers/specs/2026-07-18-ble-sensor-stream-design.md) |
 | M2b.1 — Live UWB in the stream | ✅ verified | Concurrent UWB ranging + BLE; initiator reports real `uwb_mm`, line-of-sight — [spec](superpowers/specs/2026-07-19-m2b1-uwb-in-stream-design.md) |
-| **M2b.2 — Non-line-of-sight rejection** | ⬜ **next** | Body blocks 6.5 GHz; reject reflected-path readings via `dwt_nlos_ipdiag()`, threshold from measured data |
-| M3 — iOS app | ⬜ (core logic tested) | Central, live view, CSV record/export |
+| M3a — iOS live view + link measurement | ✅ verified | Both tags connect; ~99% of the 100 Hz stream arrives — [spec](superpowers/specs/2026-07-21-m3a-ios-live-view-design.md) |
+| **M3b — Capture recording** | ⬜ **next** | Start/stop capture, CSV persistence, export, background operation |
+| M2b.2 — Non-line-of-sight rejection | ⬜ | Body blocks 6.5 GHz; reject reflected-path readings via `dwt_nlos_ipdiag()`, threshold from measured worn data (needs M3b to record it) |
 | M4 — Validation | ⬜ | Bench + worn captures; answer the four spec questions |
 
 ## 7. Decision log
@@ -148,6 +149,49 @@ unambiguously the coexistence problem and not a BLE bug.
   - **Process note:** several apparent "failures" during this bench session were
     stale RTT buffer and imprecise reference distances, not firmware. See
     `firmware/FLASHING.md` §6a — always reset before a measurement capture.
+
+- **2026-07-21 — ADR-5: Split M3 into M3a (connect + measure) and M3b (record),
+  and sequence both ahead of M2b.2.** Two decisions, one cause.
+
+  *The split:* nobody has measured what fraction of the 100 Hz stream actually
+  reaches the phone. The firmware pushes one notify per 10 ms tick per board and
+  never checks whether `sd_ble_gatts_hvx` accepted it; nRF Connect showed data
+  flowing, which is not the same claim as no loss. Recording is the easy, tested
+  half (`CaptureWriter` exists); throughput is the half that could force firmware
+  changes. Building the recorder first risks finding out afterwards that the data
+  it faithfully recorded was half missing. So M3a measures, M3b records.
+
+  *The reorder:* ADR-4 requires M2b.2's rejection threshold be set from measured
+  body-blocked data with **worn** antennas. Today's only instrument is RTT over a
+  USB tether — bench-only, as the M2b.1 spec states in §6. M2b.2 therefore cannot
+  currently source the data its own ADR demands. M3 builds that instrument, so
+  M2b.2 follows M3b.
+
+  M3a sets **no pass bar** — the measured figure is the deliverable, and M3b
+  proceeds regardless. Same posture as M2b.1 Task 1: measure before building on
+  the assumption. See [spec](superpowers/specs/2026-07-21-m3a-ios-live-view-design.md).
+
+- **2026-07-21 — M3a verified. The BLE link is not the bottleneck.** The iOS app
+  connects to both tags and reports live rate and loss.
+  - **DWM-INIT:** ~100 /s, **0.91 % loss** (210 of ~23,000)
+  - **DWM-RESP:** ~100 /s, **0.50 % loss** (124 of ~24,000)
+  - Measured over a continuous ~4-minute foreground run at ~1 m separation. No
+    disconnects occurred in the window — a drop would have started a new epoch
+    and reset the counters, and it did not.
+  - **Interpretation.** ADR-5 set no pass bar, so this is a baseline rather than
+    a pass. Reading it: human movement carries essentially all its energy below
+    ~10–20 Hz, so ~99 % of a 100 Hz stream is not a limiting factor for anything
+    Phase 1 measures. **No firmware follow-up is warranted.**
+  - **A prediction that was wrong, recorded because it shaped the design.** The
+    M3a spec (§5) expected meaningful loss, reasoning that the firmware requests
+    a 20–75 ms connection interval while producing a packet every 10 ms, and
+    never checks whether `sd_ble_gatts_hvx` accepted the packet. The measurement
+    says the SoftDevice's queuing absorbs that comfortably. The unchecked `hvx`
+    return remains a real latent gap — it is simply not costing us packets at
+    this rate. Worth re-measuring if the sample rate ever rises.
+  - Loss *is* observable, which matters: `seq` is stamped before the notify
+    (`sensor_stream.c:100`), so a firmware-side drop leaves a gap the phone can
+    see. The measurement can detect the failure mode it was built to look for.
 
 ## 8. System architecture diagrams
 
@@ -269,3 +313,69 @@ Only `ranging.[ch]` is new in M2b. `sensor_ble.c`, `accel.c` and the platform
 layer are unchanged — `platform/port.c:79,86` already provides `dw_irq_init()`
 and `port_set_dwic_isr()`, so the DW3000 interrupt is wiring to **enable**, not
 wiring to build.
+
+## 9. Known issues (robustness debt)
+
+Deliberately unfixed, recorded so they are not rediscovered from scratch.
+
+**Do 9.2 first.** It is small, self-contained, and it is the one that can
+silently truncate a capture you care about. Fix it before M3b starts recording.
+
+### 9.2 A failed UWB transmit spins the main loop forever
+
+**Severity: high. Found 2026-07-21 in review of the M2b.1 branch. NOT YET FIXED.**
+
+`ranging_exchange()` ignores the return value of `dwt_starttx()`
+(`Src/uwb/ranging.c:230`), then calls `waitforsysstatus()`, which is a bare
+`while` loop with **no software timeout** (`Src/examples/shared_data/
+shared_functions.c:589`). It terminates only because the DW3000's own RX timeout
+eventually sets a status bit.
+
+So if the transmit never starts — SPI glitch, bad radio state — no RX window
+opens, no timeout bit is ever set, and the initiator's main loop spins forever.
+Accel sampling stops, BLE notifications stop. The tag stays *connected* (the
+SoftDevice keeps the link alive from interrupt context), so on the phone it
+looks alive while sending nothing.
+
+**Why fix this before M3b.** M3b records captures. This failure looks exactly
+like a capture that stops for no reason, and would be easy to misattribute to
+the phone, the link, or the recorder — all of which would be innocent.
+
+**Fix:** check `dwt_starttx()`'s return, and put a bound on the wait (a loop
+count, or an `app_timer` deadline). On expiry, return failure so the packet
+carries the sentinel — the same accepted failure mode as a missed deadline.
+
+### 9.1 A failed init hangs the tag silently — no recovery, no indication
+
+**Severity: high for worn use. Found 2026-07-21 during M3a bring-up.**
+
+Both tags were found hung in `for (;;) {}` inside `sensor_stream()`'s
+`accel_init()` failure path. Because `accel_init()` runs **before**
+`sensor_ble_init()`, a hung board never starts advertising: the phone sees
+nothing at all, and the board gives no LED, no packet, and no error anywhere
+an untethered user could observe it. A plain MCU reset cleared it on both
+boards, so the trigger was transient peripheral state — most plausibly an I2C
+transaction interrupted at power-down leaving the LIS2DH12 unresponsive, since
+`accel_init()` fails only when `WHO_AM_I` reads back wrong at *both* candidate
+addresses (`accel.c:71-77`).
+
+The same pattern applies to `sensor_ble_init()` and `ranging_init()`: every
+init failure in `sensor_stream()` ends in an infinite loop.
+
+**Why this matters beyond the bench.** Tethered, it cost ~20 minutes with a
+J-Link to diagnose. Worn, it is a tag that appears to be recording and is not —
+discovered only afterwards, as a capture that stops for no visible reason.
+
+**Fix when M3b or M4 touches firmware:** retry `accel_init()` a few times with a
+short delay; on continued failure, **carry on and advertise anyway** with a
+status bit in the packet marking the accelerometer dead, rather than hanging.
+A tag that reports "my accelerometer is broken" is far more useful than one
+that vanishes. Note this needs a byte in the wire contract, which is frozen —
+so it is a contract change, not a drop-in patch.
+
+**Diagnostic worth reusing:** `JLinkRTTLogger` reported "RTT Control Block not
+found" and was a dead end. Dumping RAM (`savebin ram.bin 0x20000000 0x20000`)
+and running `strings` over it recovered the firmware's printed output directly,
+which is what named the failure. Sampling `PC` several times distinguished a
+tight hang loop (identical address every sample) from normal idling in
+`sd_app_evt_wait()`.

@@ -9,3 +9,6 @@ firmware/hex/*.hex
 .build/
 DerivedData/
 *.xcuserstate
+xcuserdata/
+# macos
+.DS_Store

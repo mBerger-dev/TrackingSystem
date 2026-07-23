@@ -46,4 +46,10 @@ public struct SensorPacket: Equatable {
         let rawUwb = u32(12)
         self.uwbMm = (rawUwb == SensorPacket.uwbSentinel) ? nil : rawUwb
     }
+
+    /// Acceleration in g. Raw counts are left-justified 12-bit at +-2 g,
+    /// so one g is 16384 counts.
+    public var accelG: (x: Double, y: Double, z: Double) {
+        (Double(ax) / 16384.0, Double(ay) / 16384.0, Double(az) / 16384.0)
+    }
 }

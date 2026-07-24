@@ -344,7 +344,8 @@ silently truncate a capture you care about. Fix it before M3b starts recording.
 
 ### 9.2 A failed UWB transmit spins the main loop forever
 
-**Severity: high. Found 2026-07-21 in review of the M2b.1 branch. NOT YET FIXED.**
+**Severity: high. Found 2026-07-21 in review of the M2b.1 branch. FIXED 2026-07-24
+(commit `070e6e5`, on the initiator flashed for the M3b verification run).**
 
 `ranging_exchange()` ignores the return value of `dwt_starttx()`
 (`Src/uwb/ranging.c:230`), then calls `waitforsysstatus()`, which is a bare
@@ -362,9 +363,13 @@ looks alive while sending nothing.
 like a capture that stops for no reason, and would be easy to misattribute to
 the phone, the link, or the recorder — all of which would be innocent.
 
-**Fix:** check `dwt_starttx()`'s return, and put a bound on the wait (a loop
-count, or an `app_timer` deadline). On expiry, return failure so the packet
-carries the sentinel — the same accepted failure mode as a missed deadline.
+**Fix (done):** `ranging_exchange()` now checks `dwt_starttx()`'s return and, in
+place of the unbounded `waitforsysstatus()`, spins on `dwt_readsysstatuslo()` with
+a `RANGING_STATUS_MAX_SPINS` cap. Either failure returns `false`, so the packet
+carries the sentinel — the same accepted failure mode as a missed deadline. Only
+the initiator path is affected (the responder's `ranging_exchange` is a no-op).
+Verified indirectly by the M3b worn capture: the initiator ranged continuously for
+~19 s with no stall.
 
 ### 9.1 A failed init hangs the tag silently — no recovery, no indication
 

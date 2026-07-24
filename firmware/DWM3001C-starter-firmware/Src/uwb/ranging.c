@@ -53,6 +53,11 @@ static dwt_config_t config = {
 /* One DW3000 hi32 system-time tick = 256 * 15.65 ps ~= 4.0064 ns. */
 #define HI32_TICK_NS 4.0064f
 
+/* Safety bound for the post-TX status wait (architecture.md §9.2). The DW3000's
+ * own RX timeout normally sets a status bit far below this; the cap only trips
+ * when TX silently failed to start, so no RX window - and no timeout bit - opens. */
+#define RANGING_STATUS_MAX_SPINS 200000u
+
 static const uint8_t rx_poll_msg[] = { 0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0 };
 static uint8_t rx_buffer[RX_BUF_LEN];
 
@@ -233,11 +238,29 @@ bool ranging_exchange(uint32_t *out_mm)
     dwt_writesysstatuslo(DWT_INT_TXFRS_BIT_MASK);
     dwt_writetxdata(sizeof(tx_poll_msg), tx_poll_msg, 0);
     dwt_writetxfctrl(sizeof(tx_poll_msg), 0, 1);
-    dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED);
+    if (dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED) != DWT_SUCCESS)
+    {
+        frame_seq_nb++;
+        return false;              /* TX never started -> sentinel, don't spin */
+    }
 
+    /* Bounded replacement for waitforsysstatus(): the DW3000's own RX timeout
+     * normally sets a status bit well within this cap. The spin bound is a
+     * safety net for the case where TX silently failed to start and no RX
+     * window - hence no timeout bit - ever opens (see architecture.md §9.2). */
+    const uint32_t status_mask =
+        (DWT_INT_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
     uint32_t status_reg = 0;
-    waitforsysstatus(&status_reg, NULL,
-                     (DWT_INT_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR), 0);
+    uint32_t spins = 0;
+    while (!((status_reg = dwt_readsysstatuslo()) & status_mask))
+    {
+        if (++spins >= RANGING_STATUS_MAX_SPINS)
+        {
+            dwt_writesysstatuslo(SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
+            frame_seq_nb++;
+            return false;          /* stuck radio -> sentinel, don't spin forever */
+        }
+    }
     frame_seq_nb++;
 
     if (!(status_reg & DWT_INT_RXFCG_BIT_MASK))

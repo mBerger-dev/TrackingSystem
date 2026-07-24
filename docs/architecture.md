@@ -107,8 +107,8 @@ unambiguously the coexistence problem and not a BLE bug.
 | M2a.2 — Accel-over-BLE stream | ✅ verified | GATT notify characteristic; stream `seq/time/accel`, `uwb_mm` = sentinel — [spec](superpowers/specs/2026-07-18-ble-sensor-stream-design.md) |
 | M2b.1 — Live UWB in the stream | ✅ verified | Concurrent UWB ranging + BLE; initiator reports real `uwb_mm`, line-of-sight — [spec](superpowers/specs/2026-07-19-m2b1-uwb-in-stream-design.md) |
 | M3a — iOS live view + link measurement | ✅ verified | Both tags connect; ~99% of the 100 Hz stream arrives — [spec](superpowers/specs/2026-07-21-m3a-ios-live-view-design.md) |
-| **M3b — Capture recording** | ⬜ **next** | Start/stop capture, CSV persistence, export, background operation |
-| M2b.2 — Non-line-of-sight rejection | ⬜ | Body blocks 6.5 GHz; reject reflected-path readings via `dwt_nlos_ipdiag()`, threshold from measured worn data (needs M3b to record it) |
+| M3b — Capture recording | ✅ verified | Foreground record → one combined CSV → share; verified on a worn capture — [spec](superpowers/specs/2026-07-23-m3b-capture-recording-design.md) |
+| **M2b.2 — Non-line-of-sight rejection** | ⬜ **next** | Body blocks 6.5 GHz; reject reflected-path readings via `dwt_nlos_ipdiag()`, threshold from measured worn data (M3b now records it; first body-blocked datapoint captured) |
 | M4 — Validation | ⬜ | Bench + worn captures; answer the four spec questions |
 
 ## 7. Decision log
@@ -192,6 +192,27 @@ unambiguously the coexistence problem and not a BLE bug.
   - Loss *is* observable, which matters: `seq` is stamped before the notify
     (`sensor_stream.c:100`), so a firmware-side drop leaves a gap the phone can
     see. The measurement can detect the failure mode it was built to look for.
+
+- **2026-07-24 — M3b verified (foreground recording).** The app records a session
+  to one combined CSV (`board,seq,board_time_ms,phone_arrival_ms,ax,ay,az,uwb_mm`,
+  frozen) and shares it off the phone. Verified on a ~20 s **worn** capture (tag on
+  the ankle, tag in the opposite hand — body between them nearly throughout):
+  header exact, both boards present, `seq` monotonic per board, `uwb_mm` filled on
+  `DWM-INIT` / blank on `DWM-RESP`, `phone_arrival_ms` from ~0, row counts ≈
+  rate × duration (RESP 100/s, INIT 95/s). Auto-stop-on-background confirmed. The
+  recorder writes on its own serial queue and taps packets at the full 100 Hz,
+  before the 10 Hz UI throttle.
+  - **Bonus — first real M2b.2 datapoint.** Because the run was body-blocked, the
+    `DWM-INIT` distances show the NLOS signature M2b.2 exists to reject: of ~382
+    ranging attempts, **~8 % dropped outright** (blocked first path → sentinel),
+    and of the 350 successes a **~9 % long tail** ran from ~2.0 m out to 2.85 m
+    (reflected-path multipath reading too long) against a main mode near 1.0–1.75 m
+    (median 1.47 m). This is exactly what the RTT-tethered bench could not produce
+    and why M3 was sequenced ahead of M2b.2. It proves the *problem* and the
+    *instrument*; it is **not** the threshold-setting dataset — that still needs a
+    LOS baseline, known ground-truth distances, battery power (cables sat near the
+    antennas here), and the DW3000 first-path/CIR diagnostics, which are not in the
+    frozen 16-byte packet.
 
 ## 8. System architecture diagrams
 

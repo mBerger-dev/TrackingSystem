@@ -12,6 +12,7 @@ import SensorCore
 final class BoardModel {
 
     let role: BoardRole
+    @ObservationIgnored private let recorder: RecordingController
 
     var state: LinkState = .starting
     var stats: LinkStats.Snapshot = LinkStats().snapshot
@@ -26,8 +27,9 @@ final class BoardModel {
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var started = false
 
-    init(role: BoardRole) {
+    init(role: BoardRole, recorder: RecordingController) {
         self.role = role
+        self.recorder = recorder
     }
 
     func start() {
@@ -43,6 +45,7 @@ final class BoardModel {
             role: role,
             onPacket: { [weak self] packet, arrival in
                 guard let self else { return }
+                self.recorder.append(role: self.role, packet: packet, arrival: arrival)
                 self.lock.lock()
                 self.pendingStats.record(seq: packet.seq, at: arrival)
                 self.pendingPacket = packet
@@ -98,9 +101,15 @@ final class BoardModel {
 /// never blocks the other.
 @Observable
 final class AppModel {
-    let boards: [BoardModel] = BoardRole.allCases.map(BoardModel.init(role:))
+    let recording = RecordingController()
+    let boards: [BoardModel]
 
     @ObservationIgnored private var started = false
+
+    init() {
+        let recording = self.recording
+        boards = BoardRole.allCases.map { BoardModel(role: $0, recorder: recording) }
+    }
 
     func start() {
         // Guards against a repeated onAppear firing start() twice; each
